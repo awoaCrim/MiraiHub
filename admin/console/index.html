@@ -142,35 +142,31 @@
       <nav class="sub-tabs" id="subTabs" role="tablist" aria-label="页面" hidden></nav>
       <div class="app-body">
 
-    <!-- 总览面板 —— 布局与信息密度参照 keybuddy.html：
-         运行状态条 → 告警横幅 → 2 列卡片墙（剩余积分 / 用量 / 模型额度 / 缓存命中 / 账号监测）。
-         刻意做「一屏看完」，而不是几张小卡片点到别处才看到数字。 -->
+    <!-- 概览：状态与告警 → 额度 / 用量 → 平台状态 → 账号健康 / 缓存命中。
+         每张卡右上角「查看 →」进入对应详情页；统计区间对整页生效，所以放在页头。 -->
     <section id="panel-overview" class="hidden">
-      <div class="ov-action-bar">
-        <div class="ov-page-title">总览</div>
-        <div class="ov-action-btns">
+      <header class="page-intro">
+        <div><p>当前平台的剩余额度、用量与账号健康；底部可直接切换平台查看。</p></div>
+        <div>
+          <div class="ov-seg" role="group" aria-label="统计区间"> <button type="button" data-ov-days="1">今日</button> <button type="button" data-ov-days="7" class="active">7 天</button> <button type="button" data-ov-days="30">30 天</button> </div>
           <button type="button" class="console-btn quiet" onclick="loadOverview(true)">
             <span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span>刷新
           </button>
-          <button type="button" class="console-btn primary" onclick="activateTab('platforms')">
-            <span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>平台管理
-          </button>
         </div>
-      </div>
+      </header>
 
-      <!-- 运行状态条：服务是否在跑、地址、当前平台 -->
+      <!-- 运行状态条：服务是否在跑、当前统计的平台、更新时间 -->
       <div id="ovStatus" class="ov-status"></div>
 
       <!-- 告警横幅：有封控信号才出现 -->
       <div id="ovAlert" class="ov-alert" hidden></div>
 
-      <!-- 卡片墙 -->
       <div class="ov-grid">
         <!-- 剩余额度 -->
         <div class="ov-card">
           <div class="ov-card-head">
             <span>剩余额度</span>
-            <span id="ovModelBadge" class="ov-pill">—</span>
+            <span class="ov-card-head-end"><span id="ovModelBadge" class="ov-pill">—</span><button type="button" class="ov-link" onclick="activateTab('credits')">查看 →</button></span>
           </div>
           <div id="ovBalance" class="ov-big">—</div>
           <div id="ovBalanceRow" class="ov-stat-row"></div>
@@ -182,11 +178,7 @@
         <div class="ov-card">
           <div class="ov-card-head">
             <span>用量</span>
-            <div class="ov-seg" role="group" aria-label="统计区间">
-              <button type="button" data-ov-days="1">今日</button>
-              <button type="button" data-ov-days="7" class="active">7 天</button>
-              <button type="button" data-ov-days="30">30 天</button>
-            </div>
+            <button type="button" class="ov-link" onclick="activateTab('usage')">查看 →</button>
           </div>
           <div class="ov-usage-grid">
             <div class="ov-usage-item">
@@ -209,9 +201,28 @@
           <div id="ovUsageFoot" class="ov-usage-foot"></div>
         </div>
 
+        <!-- 平台矩阵 -->
+        <div class="ov-card ov-full">
+          <div class="ov-card-head">
+            <span>平台状态</span>
+            <span class="ov-card-head-end"><span class="ov-note-inline">点击卡片切换平台</span><button type="button" class="ov-link" onclick="activateTab('platforms')">管理 →</button></span>
+          </div>
+          <div id="ovPlatforms" class="ov-platform-grid"></div>
+        </div>
+
+        <!-- 账号监测 -->
+        <div class="ov-card">
+          <div class="ov-card-head">
+            <span>账号监测</span>
+            <button type="button" class="ov-link" onclick="activateTab('accounts')">查看 →</button>
+          </div>
+          <div id="ovMonitorBars" class="ov-monitor-bars"></div>
+          <div id="ovMonitorList" class="ov-account-list"></div>
+        </div>
+
         <!-- 缓存命中率（环形图） -->
         <div class="ov-card">
-          <div class="ov-card-head"><span>缓存命中率</span></div>
+          <div class="ov-card-head"><span>缓存命中率</span><button type="button" class="ov-link" onclick="activateTab('logs')">查看 →</button></div>
           <div class="ov-cache">
             <div id="ovDonut" class="ov-donut"><div class="ov-donut-inner">
               <div id="ovDonutVal" class="ov-donut-val">—</div></div></div>
@@ -235,25 +246,6 @@
             </div>
           </div>
           <div id="ovCacheNote" class="ov-note"></div>
-        </div>
-
-        <!-- 账号监测 -->
-        <div class="ov-card">
-          <div class="ov-card-head">
-            <span>账号监测</span>
-            <button type="button" class="ov-link" onclick="activateTab('accounts')">全部 →</button>
-          </div>
-          <div id="ovMonitorBars" class="ov-monitor-bars"></div>
-          <div id="ovMonitorList" class="ov-account-list"></div>
-        </div>
-
-        <!-- 平台矩阵 -->
-        <div class="ov-card ov-full">
-          <div class="ov-card-head">
-            <span>平台状态</span>
-            <span class="ov-note-inline">点击进入该平台</span>
-          </div>
-          <div id="ovPlatforms" class="ov-platform-grid"></div>
         </div>
       </div>
     </section>

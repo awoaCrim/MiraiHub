@@ -93,3 +93,7 @@
   .page-intro { align-items:stretch; }
   .page-intro > :not(:first-child) { width:100%; }
 }
+
+/* ---------- 概览 ---------- */
+.ov-card-head-end { display:flex; align-items:center; gap:10px; }
+#panel-overview .page-intro .ov-seg { margin-right:2px; }

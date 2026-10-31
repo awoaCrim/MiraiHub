@@ -205,15 +205,13 @@ function renderOverview(data, platforms, sentinel) {
   const cache = data.cache || {};
   const monitor = data.monitor || {};
 
-  // ---- 运行状态条 ----
+  // ---- 运行状态条（API 地址只在顶栏「复制 API 地址」常驻，这里不再重复） ----
   const platformLabel = data.platform_label || "全部平台";
   $("#ovStatus").innerHTML = `
     <div class="ov-status-left">
       <span class="ov-badge-ok"><span class="ov-dot-pulse"></span> 服务运行中</span>
       <span class="ov-muted">当前统计：${esc(platformLabel)}</span>
       <span class="ov-muted">${esc((platforms && platforms.items || []).length)} 个平台</span>
-      <span class="ov-code">${esc(location.origin)}/v1</span>
-      <button type="button" class="ov-mini-btn" onclick="navigator.clipboard.writeText(location.origin+'/v1').then(()=>toast('已复制 API 地址'))">复制</button>
     </div>
     <div class="ov-status-right">
       <span class="ov-muted">更新于 ${fmtTime(new Date().toISOString().slice(0,19), false)}</span>
