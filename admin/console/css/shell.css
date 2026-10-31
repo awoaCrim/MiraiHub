@@ -1,0 +1,831 @@
+    /* ==========================================================================
+       设计令牌（借鉴 workbuddy-switch 的设计系统）
+       --------------------------------------------------------------------------
+       主色是**雾蓝** `#3E6A99`，不是绿。
+       绿色是早期遗留：那时产品本质是单个平台的代理，绿＝该平台品牌色。
+       现在界面里六家上游并列，绿色反而像「偏向某一家」，而且高饱和绿
+       在大屏上比蓝更抢眼。换成低饱和、掺一点灰的雾蓝后，观感更沉，
+       更接近网关 / 监控这类基础设施工具该有的样子。
+
+       ⚠️ `--ok` / `--warn` / `--danger` 是**语义色，不随主色变** ——
+       成功绿、警告橙、失败红是通用约定，跟着主色改会失去辨识度。
+
+       其余令牌保持：字重只有 400/500/600，圆角 12px 一档，
+       阴影是「极淡的 slate 双层」而不是明显的投影。
+
+       与参考项目的差异：那边是 Tailwind v4 的 oklch CSS-first 配置，
+       这里是预编译的 Tailwind v3 静态 CSS，所以令牌写成十六进制、
+       并通过 CSS 变量 + 少量语义类落地（不引入新的构建步骤）。
+       ========================================================================== */
+    :root{
+      /* 官方设计 token（workbuddy.cn 实测）：
+         产品色 #3E6A99(主)/#4C7CAC(次)/#E4EDF6(软填充)/#f2fcfa(软底)；
+         中性 #ffffff/#fafafa/#f0f0f0/#f7f8f9(页底)/#0a0a0a(墨)；
+         主按钮 #1a1a1a + 白字。深色模式沿用原青绿，见下方暗色块。 */
+      --brand:#3E6A99;            /* 浅色模式主色（雾蓝，见下方说明） */
+      /* rgba() 光晕/阴影用的 RGB 分量 —— 深色模式会换成更亮的一档，
+         这样「选中态的光晕」在深底上才不会灰掉。 */
+      --brand-rgb:62,106,153;
+      --brand-strong:#33587F;     /* hover / 强调，深一档 */
+      --brand-ink:#3E6A99;        /* 主色文字（白底对比度 6.2:1） */
+      --brand-soft:#E4EDF6;
+      --brand-grad:linear-gradient(135deg,#4C7CAC 0%,#3E6A99 100%);
+
+      /* 中性面（官方中性 token） */
+      --bg:#f7f8f9;               /* 页面底 */
+      --surface:#ffffff;          /* 卡片 */
+      --surface-2:#fafafa;        /* 次级面（muted） */      --surface-3:#f0f0f0;        /* 三级面（accent） */
+      --border:#f0f0f0;
+      --border-soft:rgba(240,240,240,.7);
+
+      /* 文字 */
+      --fg:#0a0a0a;
+      --fg-muted:#656970;
+      --fg-subtle:#94a3b8;
+
+      /* 语义色：到期风险是本次的重点，必须与「一般警告」区分开 */
+      --warn:#ea580c;             /* 7 天内到期（橙，与官方一致） */
+      --warn-bar:#f97316;
+      --warn-soft:rgba(249,115,22,.12);
+      --danger:#e7000b;           /* 已到期 */
+      --danger-soft:rgba(231,0,11,.10);
+      --ok:#16a34a;
+      --ok-soft:rgba(22,163,74,.12);
+
+      /* 圆角：基准 12px，派生 8/10/16 */
+      --r-sm:8px; --r:12px; --r-lg:16px;
+
+      /* 选中态上的**前景色**。
+       *
+       * 为什么单独一个变量：原来选中项的背景是 --brand（青绿），文字与图标
+       * 却用 --brand-ink —— 而 brand-ink 本身就是同一种青绿（#3E6A99），
+       * 等于「绿底绿字」，几乎看不见。浅色模式必须用白字。
+       * 深色模式下 brand 变得更亮（#6E9BC9），白字对比度下降，改回深墨色。 */
+      --on-brand:#ffffff;
+
+      /* 字体栈（对齐官方客户端 renderer）：参考客户端使用的字体栈
+       * system-ui 优先，确保在各平台使用最佳系统字体
+       * Windows: Segoe UI (Latin) + Microsoft YaHei UI (CJK)
+       * macOS: San Francisco + PingFang SC
+       * 这个顺序确保跨平台一致性和最佳渲染效果 */
+      --font-sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei UI","Hiragino Sans GB",sans-serif;
+      --mono:SF Mono,Menlo,Consolas,ui-monospace,SFMono-Regular,Monaco,"Liberation Mono","Courier New",monospace;
+
+      /* 字号阶梯（对齐官方 CSS 实测分布：12px 1580 处 / 14px 1094 / 13px 930 /
+       * 11px 386 / 16px 251 / 15px 130 / 10px 110 / 18px 98 / 20px 72）。
+       * 关键点：官方**只用整数档**，没有 12.5 / 13.5 这种半像素字号 ——
+       * 半像素在 1x 屏上会触发亚像素抗锯齿，笔画发虚，这是"不够清晰"的直接来源。 */
+      --fs-2xs:10px;    /* 标签、badge */
+      --fs-xs:11px;     /* 辅助说明、表格小字 */
+      --fs-sm:12px;     /* 正文默认（官方最高频） */
+      --fs-base:13px;   /* 稍强正文 */
+      --fs-md:14px;     /* 强调正文（官方次高频） */
+      --fs-lg:16px;     /* 区块标题 */
+      --fs-xl:18px;     /* 页面标题 */
+      --fs-2xl:20px;    /* 大标题 */
+      /* 字重：官方只用 400 / 500 / 600 / 700 四档（500 与 600 是绝对主力）。
+       * 不引入 550 / 650 这类变量字重，系统字体没有对应实例，会退化到合成加粗。 */
+      --fw-regular:400; --fw-medium:500; --fw-semibold:600; --fw-bold:700;
+      /* 行高：官方最常用 20px / 22px（固定值，配 12~14px 字号）+ 单位 1.5/1.4/1.75 */
+      --lh-tight:1.4; --lh-normal:1.5; --lh-relaxed:1.75;
+
+      /* 动效（对齐官方 renderer 实测）：主缓动与退出缓动 */
+      --ease-out:cubic-bezier(.38,0,.24,1);   /* 官方 130 处，主体缓动 */
+      --ease-in:cubic-bezier(.82,0,1,.9);     /* 官方 22 处，多为退出方向 */
+      /* 弹窗遮罩：官方是纯色半透明（color-mix 52%~62%），**不用毛玻璃** */
+      --modal-mask:rgba(15,23,42,.52);
+
+      /* 阴影：极淡的 slate 双层（参考项目的招牌） */
+      --sh-1:0 1px 2px rgba(15,23,42,.025), 0 10px 28px rgba(15,23,42,.035);
+      --sh-2:0 2px 4px rgba(15,23,42,.04), 0 14px 34px rgba(15,23,42,.055);
+      --sh-pop:0 10px 30px rgba(15,23,42,.12);
+
+      /* 兼容旧变量名（模板里仍有 .bg-wb / .text-wb / var(--wb-primary) 的引用） */
+      --wb-primary:var(--brand);
+      --wb-primary-d:var(--brand-strong);
+      --wb-grad:var(--brand-grad);
+      --wb-bg:var(--bg);
+      --wb-surface:var(--surface-2);
+      --wb-border:var(--border);
+
+      /* 图表色板：首色对齐官方产品绿 */
+      --c1:#3E6A99; --c2:#33a6a0; --c3:#526fb2; --c4:#9379c2;
+      --c5:#ce9a43; --c6:#cb6c6d; --c7:#4492bd; --c8:#86a152;
+    }
+    /* Explicit preference; first visit always uses the light palette. */
+    :root[data-theme="dark"]{
+        /* 官方深色石墨 token：#141414/#1f1f1f/#292929/#353535，文字 #ffffff */
+        --bg:#141414; --surface:#1f1f1f; --surface-2:#292929; --surface-3:#353535;
+        --border:#353535; --border-soft:rgba(255,255,255,.06);
+        --fg:#ffffff; --fg-muted:rgba(255,255,255,.62); --fg-subtle:rgba(255,255,255,.40);
+        --brand:#6E9BC9; --brand-strong:#87B0D6; --brand-ink:#9BC0E2;
+  --brand-rgb:110,155,201;
+      /* 深色模式下 brand 更亮，白字对比不足；选中态改用深墨色文字。 */
+      --on-brand:#0B1725;
+        --brand-soft:rgba(110,155,201,.16);
+        --warn:#fb923c; --warn-bar:#f97316; --warn-soft:rgba(249,115,22,.18);
+        --danger:#ff6467; --ok:#4ade80;
+        --sh-1:0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.45);
+        --sh-2:0 2px 4px rgba(0,0,0,.45), 0 14px 34px rgba(0,0,0,.5);
+        --sh-pop:0 10px 30px rgba(0,0,0,.6);
+        --c1:#6E9BC9; --c2:#59c5bf; --c3:#92b3fb; --c4:#c2a7f4;
+        --c5:#ebb761; --c6:#f79494; --c7:#6dbbe8; --c8:#a7c474;
+      }
+    body{
+      /* 走上面的 --font-sans（含 "Microsoft YaHei UI" 中文兜底）。
+         直接写死字体名会在 Windows 上掉到宋体，中文观感与官方差一截。 */
+      font-family:var(--font-sans);
+      background:var(--bg); color:var(--fg);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      font-synthesis:none;
+    }
+    /* 数字一律等宽对齐：表格里跳动的数字不等宽会显得很廉价 */
+    .tnum{ font-variant-numeric:tabular-nums; }
+    /* 等宽字体统一走 token（tailwind 的 .font-mono 是工具类单类选择器，
+       这里同为单类、定义在页面内联样式之后，可稳定覆盖）。 */
+    .font-mono, code, kbd, pre, samp{ font-family:var(--mono); }
+    .fade-in{ animation:fade .22s var(--ease-out); }
+    @keyframes fade{ from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:none;} }
+    .toast{ position:fixed; right:16px; bottom:16px; z-index:60; }
+    /* 全局加载条：顶部 2px 的流光。只在请求超过 120ms 时出现，
+       所以正常翻转页面不会闪；数据慢的时候用户能看出「在加载」。 */
+    #globalLoadBar{
+      position:fixed; top:0; left:0; right:0; height:2px; z-index:90;
+      pointer-events:none; opacity:0; transition:opacity .16s ease;
+      overflow:hidden;
+    }
+    #globalLoadBar.on{ opacity:1; }
+    #globalLoadBar > i{
+      display:block; height:100%; width:38%;
+      background:linear-gradient(90deg,transparent,var(--brand,#3E6A99),transparent);
+      animation:glbSlide 1.05s ease-in-out infinite;
+    }
+    @keyframes glbSlide{
+      0%{ transform:translateX(-110%); }
+      100%{ transform:translateX(330%); }
+    }
+    @media (prefers-reduced-motion: reduce){
+      #globalLoadBar > i{ animation-duration:2.4s; }
+    }
+    /* ---- 组件动画：开/关双向（弹窗、下拉、浮层） ----
+     * 时长/缓动对齐官方客户端 renderer 实测值：主缓动 cubic-bezier(.38,0,.24,1)
+     * （官方 130 处，压倒性主体），退出用 cubic-bezier(.82,0,1,.9)（官方 22 处，
+     * 多为退出方向）；弹窗只让盒体滑入，遮罩和毛玻璃立即显示。 */
+    @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+    @keyframes fadeOut{ from{opacity:1} to{opacity:0} }
+    @keyframes popIn{ from{opacity:0; transform:translateY(12px) scale(.965)} to{opacity:1; transform:none} }
+    @keyframes popOut{ from{opacity:1; transform:none} to{opacity:0; transform:translateY(8px) scale(.965)} }
+    @keyframes dropIn{ from{opacity:0; transform:translateY(-5px) scale(.985)} to{opacity:1; transform:none} }
+    @keyframes dropOut{ from{opacity:1; transform:none} to{opacity:0; transform:translateY(-4px) scale(.985)} }
+    @keyframes toastIn{ from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
+    /* 遮罩保持完整显示，只对弹窗内容播放动画。 */
+    #modal #modalBox{ animation:popIn .18s var(--ease-out); }
+    #modal.closing{ pointer-events:none; }
+    #modal.closing #modalBox{ animation:popOut .18s var(--ease-in) forwards; }
+    /* 下拉：面板开=下落进入，关=上收退出 */
+    .ui-select.open .ui-select-panel{ display:block; animation:dropIn .15s var(--ease-out); }
+    .ui-select.closing .ui-select-panel{ display:block; animation:dropOut .15s var(--ease-in) forwards; }
+    .toast{ animation:toastIn .2s ease; }
+    pre{ white-space:pre-wrap; word-break:break-all; }
+    .bg-wb{ background:var(--brand-grad); }
+    .text-wb{ color:var(--brand-ink); }
+    .btn-primary{ background:#1a1a1a; color:#fff; transition:.15s; box-shadow:0 1px 2px rgba(15,23,42,.12); }
+    .btn-primary:hover{ background:#333; }
+    .card{
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
+      box-shadow:var(--sh-1);
+    }
+    /* 卡片内表格：去掉外框，让「卡片本身」承担容器语义（参考项目的做法） */
+    .card-flat{ box-shadow:none; }
+
+    /* ===== 布局外壳：左侧导航栏 + 内容区 =====
+     * 参考项目用 220px 的着色侧栏 + 1180px 居中内容。
+     * 这里同样采用：11 个面板用顶部横排胶囊在窄屏会挤成两行、且滚动位置
+     * 与内容脱节；侧栏把「导航」和「内容滚动」彻底分开，长列表翻到底部
+     * 也能立刻切换面板。 */
+    .app-shell{ display:flex; min-height:100vh; }
+    .app-side{
+      width:216px; flex-shrink:0; background:var(--surface);
+      border-right:1px solid var(--border);
+      display:flex; flex-direction:column; gap:2px; padding:16px 12px;
+      position:sticky; top:0; height:100vh; overflow-y:hidden!important;
+    }
+    /* 品牌区与侧栏底部：桌面显示，移动端隐藏（移动端顶栏只需要图标+汉堡） */
+    .side-brand{
+      display:flex; align-items:center; gap:10px; padding:0 12px 16px; margin-bottom:8px;
+      border-bottom:1px solid var(--border);
+    }
+    .side-foot{
+      margin-top:auto; padding:12px 12px 0; font-size:11px;
+      border-top:1px solid var(--border); color:var(--fg-subtle);
+    }
+    /* 导航容器：**类而不是内联样式**。
+     * 内联 style 的优先级高于媒体查询，用内联写死 flex-direction:column
+     * 会让移动端的「横向排列 / 折叠」规则全部失效（踩过）。 */
+    .side-nav{ display:flex; flex-direction:column; gap:2px; }
+    /* 汉堡按钮：移动端才显示 */
+    .side-toggle{
+      display:none; align-items:center; justify-content:center;
+      width:38px; height:38px; border-radius:10px; flex-shrink:0;
+      border:1px solid var(--border); background:var(--surface);
+      color:var(--fg); cursor:pointer; font-size:15px;
+    }
+    .side-toggle:hover{ background:var(--surface-2); }
+    .side-item{
+      display:flex; align-items:center; gap:10px;
+      padding:9px 12px; border-radius:calc(var(--r) - 2px);
+      font-size:14px; color:var(--fg-muted); cursor:pointer;
+      transition:background .15s, color .15s; outline:none; border:0;
+      background:transparent; width:100%; text-align:left;
+    }
+    .side-item:hover{ background:rgba(15,23,42,.04); color:var(--fg); }
+    .side-item.active{ background:rgba(15,23,42,.06); color:var(--fg); font-weight:600; }
+    .side-item{ position:relative; }
+    .side-item::after{ content:""; position:absolute; left:-4px; top:50%; width:3px; height:0;
+      border-radius:3px; background:var(--brand); transform:translateY(-50%);
+      transition:height .22s var(--ease-out); }
+    /* ========================================================================
+       `.hidden` 必须自己定义
+       ------------------------------------------------------------------------
+       此前全站有 43 处 `class="... hidden"`，但**没有任何 CSS 定义 `.hidden`**
+       （Tailwind 的 `.hidden` 不在预编译产物里 —— 构建时没扫到）。
+       结果：所有「隐藏」的元素其实都显示着，包括侧栏角标里的 `0`。
+       ====================================================================== */
+    .hidden{ display:none !important; }
+    .side-item:active{ transform:scale(.985); }
+    :root[data-theme="dark"] .side-item::after{ left:-4px; }
+    .side-item i{ width:16px; text-align:center; font-size:13px; }
+    .side-item .side-dot{
+      margin-left:auto; min-width:18px; height:18px; padding:0 5px;
+      display:inline-flex; align-items:center; justify-content:center;
+      border-radius:9999px; background:var(--warn); color:#fff;
+      font-size:10px; font-weight:600; font-variant-numeric:tabular-nums;
+    }
+    /* 数字为 0 的角标整体不占位：`display:none` 而不是只把文字设成 0 ——
+       否则会留下一个空的橙色圆点，看着像「有东西但读不出来」。 */
+    .side-item .side-dot[hidden]{ display:none !important; }
+    .app-main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+    /* 内容宽度与**垂直节奏**。
+     *
+     * 间距问题的根因：原先靠 Tailwind 的 `mb-5` 撑开「指标卡 → 面板」的间隔，
+     * 而 `mb-5` **不在预编译 CSS 里**（构建时没扫到），于是那个 margin 实际是 0，
+     * 指标卡与下方面板贴在一起；同时各面板自己的标题/工具条用的是 mb-3，
+     * 于是「有的地方 0、有的地方 12px」，看起来就是上下间距不协调。
+     *
+     * 现在统一由这里的几条规则给出节奏，不再依赖可能不存在的工具类：
+     *   顶部 24px / 区块之间 20px / 底部 48px
+     */
+    .app-body{ max-width:1360px; width:100%; margin:0 auto; padding:24px 28px 48px; }
+    /* 面板容器：每个面板自己负责内部间距，容器只给「与上一个区块」的统一间隔 */
+    .app-body > section{ margin-bottom:20px; }
+    .app-body > section:last-child{ margin-bottom:0; }
+    /* ==========================================================================
+       移动端（<=900px）：顶部图标栏 + 汉堡折叠
+       --------------------------------------------------------------------------
+       原实现是「侧栏改成横向排列表格」，有三个真实问题：
+         1. **导航不能折叠** —— `<nav>` 上的**内联** `flex-direction:column`
+            优先级高于媒体查询，整列 11 项竖排（实测高 397px），
+            把正文硬生生推下去（首屏内容顶到 662px）；
+         2. 11 个导航项横向排开需要 495px 宽，而机身只有 360~390px，
+            必然要横向滑动才能点到后半截的「设置」；
+         3. 品牌块与底部信息被 `flex` 拉成整列高（实测 brand 高 389px），
+            中间大片空白，观感很怪。
+
+       现在改成移动端该有的样子：
+         顶部一行 = 品牌图标 + 当前面板名 + 汉堡按钮；
+         点汉堡展开/收起导航抽屉（`position:absolute` 悬浮，不占正文空间）。
+       ========================================================================== */
+    @media (max-width:900px){
+      .app-shell{ flex-direction:column; }
+      .app-side{
+        width:auto; height:auto; position:sticky; top:0; z-index:40;
+        flex-direction:row; align-items:center; gap:8px;
+        padding:8px 12px; overflow:visible;
+        border-right:0; border-bottom:1px solid var(--border);
+      }
+      /* 顶栏：汉堡 + 品牌（品牌名在小屏可省） */
+      .side-brand{
+        display:flex; padding:0; margin:0; border-bottom:0; flex:1 1 auto; min-width:0;
+      }
+      .side-brand .side-title{ display:none; }   /* 只留图标，省横向空间 */
+      .side-toggle{ display:inline-flex; order:-1; }
+      /* 底部信息收进抽屉，不占顶栏 */
+      .side-foot{ display:none; }
+      /* 导航抽屉：**从左侧滑出**（不是从下方展开）。
+       * 左侧抽屉是移动端导航的通用心智模型，也让「汉堡在左、菜单也在左」
+       * 形成位置一致；从上方垂下来会盖住内容顶部，指向性也弱。 */
+      .side-nav{
+        display:flex; position:fixed; left:0; top:0; bottom:0;
+        width:min(78vw, 288px);
+        flex-direction:column; gap:2px; padding:14px 10px;
+        background:var(--surface); border-right:1px solid var(--border);
+        box-shadow:6px 0 28px rgba(15,23,42,.16);
+        overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none; z-index:41;
+        /* 收起态：整体移出视口左侧 + 不可点 */
+        transform:translateX(-102%);
+        transition:transform .22s var(--ease-out);
+        visibility:hidden;
+      }
+      .side-nav::-webkit-scrollbar{ display:none; width:0; height:0; }
+      .app-side.open .side-nav{
+        transform:translateX(0); visibility:visible;
+      }
+      /* 抽屉顶部补一个标题（左侧抽屉没有「顶栏」承接，需要自己的头部） */
+      .side-nav-head{
+        display:flex; align-items:center; justify-content:space-between;
+        padding:2px 6px 10px; margin-bottom:6px;
+        border-bottom:1px solid var(--border);
+        font-size:13px; font-weight:600; color:var(--fg);
+      }
+      .side-nav-head button{
+        width:30px; height:30px; border-radius:8px; border:0; cursor:pointer;
+        background:transparent; color:var(--fg-muted); font-size:14px;
+      }
+      .side-nav-head button:hover{ background:var(--surface-2); }
+      /* 抽屉展开时顶栏的汉堡按钮隐藏（抽屉自带关闭按钮，避免两个入口） */
+      .app-side.open .side-toggle{ visibility:hidden; }
+      .side-item{ width:100%; padding:11px 14px; font-size:14px; }
+      .app-body{ padding:16px 14px 32px; }
+    }
+    /* 桌面：抽屉头部隐藏（那是移动端专属） */
+    .side-nav-head{ display:none; }
+    @media (max-width:900px){ .side-nav-head{ display:flex; } }
+    /* 桌面：不显示「当前面板名」（侧栏本来就一眼看得见选中态）。
+     * **必须写在这个 @media 之前** —— 移动端要把它改成 display:block，
+     * 若桌面规则排在后面，同优先级下后者胜出，移动端就会一直是 none
+     * （踩过：面板名在手机上死活不显示）。 */
+    .side-current{ display:none; }
+    /* 移动端：顶栏显示当前面板名（抽屉收起时也知道自己在哪） */
+    @media (max-width:900px){
+      .side-current{
+        display:block; flex:0 1 auto; min-width:0;
+        font-size:14px; font-weight:600; color:var(--fg);
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      }
+      /* 有面板名时品牌块不抢宽度 */
+      .side-brand{ flex:0 0 auto; }
+    }
+    /* 抽屉里的退出入口：仅移动端需要（桌面底部已有），桌面隐藏避免重复 */
+    .side-item-quit{ display:none; }
+    @media (max-width:900px){
+      .side-item-quit{ display:flex; margin-top:6px; color:var(--danger); }
+      .side-item-quit:hover{ background:var(--danger-soft); color:var(--danger); }
+    }
+    /* 抽屉遮罩：移动端展开时点击空白处收起 */
+    .side-scrim{
+      display:none; position:fixed; inset:0; z-index:39;
+      background:rgba(15,23,42,.35);
+    }
+    @media (max-width:900px){
+      /* 遮罩淡入（与抽屉的位移动画同时进行，观感更连贯） */
+      .app-shell.menu-open .side-scrim{
+        display:block; animation:scrimIn .2s ease;
+      }
+      @keyframes scrimIn{ from{opacity:0;} to{opacity:1;} }
+    }
+    /* 指标卡网格：窄屏 2 列、中屏 4 列，避免「太挤」或「太空」 */
+    .stat-grid{ display:grid; gap:12px; grid-template-columns:repeat(2,minmax(0,1fr)); }
+    @media (min-width:760px){ .stat-grid{ grid-template-columns:repeat(4,minmax(0,1fr)); } }
+
+    /* 页头：22px 半粗标题 + 12.5px 次级说明（参考项目的排版比例）。
+     * 所有面板的页头都走这一份，保证「标题与下方内容的间距」处处一致。 */
+    .page-head{ display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px; margin:0 0 14px; }
+    .page-head h1{ font-size:22px; font-weight:600; letter-spacing:-.02em; margin:0; }
+    .page-head p{ margin:6px 0 0; font-size:12px; color:var(--fg-muted); line-height:1.6; }
+    .page-head > div:first-child{ min-width:0; flex:1 1 420px; }
+    .page-head > div:last-child{ flex:0 0 auto; }
+    /* 面板工具条（旧结构，各面板标题 + 按钮那一行）：与 .page-head 同节奏 */
+    .panel-toolbar{ margin-bottom:14px; }
+    .section-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 10px; }
+    .section-head h3{ font-size:14px; font-weight:600; margin:0; }
+    .section-head .hint{ font-size:11px; color:var(--fg-subtle); }
+    /* 面板内的说明段（标题下方那句灰字）：与内容保持 12px 节奏 */
+    .panel-note{ font-size:12px; color:var(--fg-muted); margin:0 0 12px; line-height:1.6; }
+
+    /* 指标卡：数值用大号等宽数字，标题用小号。
+     *
+     * 顶部卡片统一带一点**主题色的渐变**（品牌青绿，左上 → 右下微微淡出），
+     * 让首屏一眼就有品牌感，而不是四块纯白方块。
+     * 渐变刻意做得非常淡 —— 它是「底色」不是「色块」：
+     * 太重会跟橙色告警卡抢注意力，也会压低数字的可读性。 */
+    .stat{
+      position:relative; overflow:hidden;
+      background:linear-gradient(135deg, var(--brand-soft) 0%, transparent 58%), var(--surface);
+      border:1px solid var(--border); border-radius:var(--r); padding:14px 16px;
+    }
+    /* 右上角一团极淡的品牌色光晕（参考项目 account-card 的做法：
+     * 用模糊圆从边角溢出，而不是加边框或改底色）。 */
+    .stat::after{
+      content:""; position:absolute; right:-30px; top:-36px;
+      width:100px; height:100px; border-radius:9999px;
+      background:var(--brand); opacity:.13; filter:blur(20px);
+      pointer-events:none;
+    }
+    .stat .stat-label{ font-size:11px; color:var(--fg-muted); display:flex; align-items:center; gap:6px; position:relative; z-index:1; }
+    .stat .stat-value{ font-size:24px; font-weight:600; letter-spacing:-.025em; font-variant-numeric:tabular-nums; margin-top:6px; line-height:1.1; position:relative; z-index:1; }
+    .stat .stat-sub{ font-size:11px; color:var(--fg-subtle); margin-top:4px; position:relative; z-index:1; }
+    /* 告警态：橙色压过品牌绿（紧迫信息优先），同样用极淡的渐变 */
+    .stat.is-warn{
+      border-color:rgba(249,115,22,.38);
+      background:linear-gradient(135deg, var(--warn-soft) 0%, transparent 58%), var(--surface);
+    }
+    .stat.is-warn::after{ background:var(--warn-bar); opacity:.16; }
+    .stat.is-danger{ border-color:rgba(231,0,11,.30); }
+    .stat.is-danger::after{ background:var(--danger); opacity:.14; }
+    .stat.is-brand{ border-color:rgba(66,192,142,.34); }
+
+    /* 到期徽标：橙=7 天内，红=已到期，灰=长期有效（语义与参考项目一致） */
+    .exp-badge{
+      display:inline-flex; align-items:center; gap:4px; white-space:nowrap;
+      padding:1px 7px; border-radius:9999px; font-size:11px; font-weight:600;
+      font-variant-numeric:tabular-nums;
+    }
+    .exp-badge.soon{ background:var(--warn-soft); color:var(--warn); }
+    .exp-badge.dead{ background:var(--danger-soft); color:var(--danger); }
+    .exp-badge.ever{ background:var(--surface-2); color:var(--fg-muted); }
+    /* 明细行：数量 chip + 名称 + 到期日（参考项目的 CreditResourceRow 结构） */
+    .pkg-row{ padding:7px 0; border-top:1px solid var(--border-soft); }
+    .pkg-row:first-child{ border-top:0; }
+    .pkg-line{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px; font-size:12px; }
+    .pkg-amt{
+      border-radius:var(--r-sm); background:var(--surface-2);
+      padding:2px 7px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--fg);
+    }
+    .pkg-track{ height:4px; border-radius:9999px; background:var(--surface-2); overflow:hidden; margin-top:5px; }
+    .pkg-track > i{ display:block; height:100%; border-radius:9999px; background:var(--brand); }
+    .pkg-track > i.soon{ background:var(--warn-bar); }
+    .pkg-track > i.dead{ background:var(--danger); }
+
+    /* 到期风险分档条：横向堆叠，一眼看出有多少额度落在哪一档 */
+    .risk-bar{ display:flex; height:10px; border-radius:9999px; overflow:hidden; background:var(--surface-2); }
+    .risk-bar > span{ display:block; height:100%; }
+
+    /* 表格：更轻的表头、行悬停反馈 */
+    .tbl{ width:100%; border-collapse:separate; border-spacing:0; font-size:13px; }
+    .tbl thead th{
+      background:var(--surface-2); color:var(--fg-muted); font-weight:500;
+      text-align:left; padding:9px 14px; white-space:nowrap;
+      position:sticky; top:0; z-index:1;
+    }
+    .tbl tbody td{ padding:9px 14px; border-top:1px solid var(--border-soft); vertical-align:middle; }
+    :root[data-theme="dark"] .side-item:hover{ background:rgba(255,255,255,.06); }
+    :root[data-theme="dark"] .side-item.active{ background:rgba(255,255,255,.10); }
+
+    /* 空状态：虚线边框 + 安静文案（参考项目的 calm empty state） */
+    .empty{
+      border:1px dashed var(--border); border-radius:var(--r);
+      padding:36px 16px; text-align:center; font-size:12px; color:var(--fg-muted); line-height:1.7;
+    }
+
+    /* ==========================================================================
+       语义尺寸类（**不要**在这里之外用 Tailwind 的任意值类）
+       --------------------------------------------------------------------------
+       /static/vendor/tailwind/tailwind.min.css 是**预编译产物**，只含构建那一刻
+       用到的类。之后新写 `text-[11.5px]` 这类任意值类会**静默不生效** ——
+       不报错、不警告，只是样式没了（典型表现就是「有些地方没有样式」）。
+
+       所以固定尺寸统一在这里定义成语义类。改这些值只改一处，
+       也不会再依赖「运气好已经编译进去了」。
+       新增检查：`_zcode_probe/check_tailwind_classes.py` 会扫描全文，
+       把「引用了但 CSS 里不存在」的任意值类报出来。
+       ========================================================================== */
+    .fs-13-5{ font-size:14px; }
+    .fs-12-5{ font-size:12px; }
+    .fs-12{ font-size:12px; }
+    .fs-11-5{ font-size:11px; }
+    .fs-10-5{ font-size:10px; }
+    .fs-10{ font-size:10px; }
+    /* 滚动容器统一高度：长列表一律「固定高度 + 内部滚动」，
+     * 不让页面随着数据量无限变长（既难用，也让整页越滚越卡）。 */
+    .scroll-box{ overflow-y:auto; overscroll-behavior:contain; }
+    .scroll-box::-webkit-scrollbar{ width:8px; }
+    .scroll-28{ max-height:28rem; }
+    .scroll-34{ max-height:34rem; }
+    /* 表单筛选块的最小宽度：窄屏会自然换行 */
+    .fld-200{ flex:1 1 200px; min-width:200px; }
+    .fld-140{ flex:0 1 140px; min-width:130px; }
+    .fld-150{ flex:1 1 150px; min-width:150px; }
+    .fld-110{ flex:0 1 110px; min-width:100px; }
+    .minw-190{ min-width:190px; }
+    .maxw-45{ max-width:45%; }
+
+    /* ==========================================================================
+       间距 / 悬停语义类
+       --------------------------------------------------------------------------
+       下面这些原本写的是 Tailwind 工具类，但**预编译 CSS 里没有它们** ——
+       构建时没扫到，所以压根没被编译进去。表现就是「类名写了但间距不对」，
+       肉眼完全看不出（`mb-5` 与存在的 `mb-4` 长得一模一样）。
+
+       实测缺失清单：mb-5 gap-x-4 gap-y-1.5 pb-2 pb-4 px-2.5 m-0 mb-1.5
+       mt-auto hover:text-wb hover:opacity-80。
+
+       统一改成这里定义的语义类：语义明确、不依赖预编译内容，
+       而且以后调间距只改一处，不会再出现「有的生效有的不生效」。
+       ========================================================================== */
+    .mt-auto{ margin-top:auto; }
+    .m-0{ margin:0; }
+    .mb-1-5{ margin-bottom:6px; }
+    .pb-2{ padding-bottom:8px; }
+    .pb-4{ padding-bottom:16px; }
+    .px-2-5{ padding-left:10px; padding-right:10px; }
+    .gap-x-4{ column-gap:16px; }
+    .gap-y-1-5{ row-gap:6px; }
+    .hover-lift{ transition:opacity .15s; }
+    .hover-lift:hover{ opacity:.8; }
+    .hover-brand:hover{ color:var(--brand-ink); }
+    /* 页面主要区块之间的统一间隔（原来是 mb-5，那个类不存在所以为 0） */
+    .block-gap{ margin-bottom:20px; }
+
+    /* 页头与内容区的统一节奏：所有面板的顶部间距一致，
+     * 不再出现「有的面板贴着指标卡、有的空一大截」。 */
+    .panel-stack > section{ margin-top:0; }
+
+    /* 滚动条：透明轨道 + 短胶囊滑块，悬停才加深（对齐官方后台的极简样式） */
+    .overflow-x-auto::-webkit-scrollbar{ height:8px; }
+    .overflow-x-auto::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:8px; }
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover{ background:#94a3b8; }
+    .overflow-x-auto::-webkit-scrollbar-track{ background:transparent; }
+    *{ scrollbar-width:thin; scrollbar-color:#cbd5e1 transparent; }
+    :root[data-theme="dark"] *{ scrollbar-color:#4a4a4a transparent; }
+    ::-webkit-scrollbar{ width:8px; height:8px; background:transparent; }
+    ::-webkit-scrollbar-track{ background:transparent; }
+    ::-webkit-scrollbar-thumb{
+      background:#cbd5e1; border-radius:8px;
+      border:2px solid transparent; background-clip:content-box;
+    }
+    ::-webkit-scrollbar-thumb:hover{ background:#94a3b8; background-clip:content-box; }
+    :root[data-theme="dark"] ::-webkit-scrollbar-thumb{ background:#4a4a4a; background-clip:content-box; }
+    :root[data-theme="dark"] ::-webkit-scrollbar-thumb:hover{ background:#5c5c5c; background-clip:content-box; }
+    ::-webkit-scrollbar-corner{ background:transparent; }
+
+    /* ==================== 自研下拉组件（替换原生 select）==================== */
+    .ui-select{ position:relative; user-select:none; }
+    .ui-select-btn{
+      display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+      cursor:pointer; background:#fff; transition:.15s; text-align:left;
+    }
+    .ui-select.open .ui-select-btn{ border-color:var(--wb-primary); box-shadow:0 0 0 3px rgba(40,184,148,.15); }
+    .ui-select-btn .ui-select-arrow{ transition:transform .18s ease; color:#94a3b8; font-size:.7rem; flex-shrink:0; }
+    .ui-select.open .ui-select-btn .ui-select-arrow{ transform:rotate(180deg); }
+    .ui-select-panel{
+      position:absolute; z-index:55; top:calc(100% + 4px); left:0; right:0;
+      background:#fff; border:1px solid var(--wb-border); border-radius:.75rem;
+      box-shadow:0 10px 30px rgba(17,24,39,.12); padding:.25rem;
+      max-height:16rem; overflow:auto; display:none;
+    }
+    .ui-select.open .ui-select-panel{ display:block; }
+    .ui-select-opt{
+      padding:.45rem .6rem; border-radius:.5rem; cursor:pointer; font-size:.875rem;
+      display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+    }
+    .ui-select-opt:hover{ background:var(--wb-surface); }
+    .ui-select-opt.sel{ background:rgba(40,184,148,.10); color:var(--wb-primary-d); font-weight:600; }
+    .ui-select-opt .fa-check{ font-size:.7rem; }
+
+    /* ==================== 自研确认框（替换原生 confirm）==================== */
+    #confirmMask{
+      position:fixed; inset:0; z-index:70; display:none;
+      align-items:center; justify-content:center; padding:1rem;
+      background:transparent;
+    }
+    #confirmMask.show{ display:flex; }
+    .confirm-box{
+      background:#fff; border-radius:1rem; width:min(26rem,94vw);
+      box-shadow:0 24px 60px rgba(17,24,39,.24); overflow:hidden;
+      animation:pop .18s var(--ease-out);
+    }
+    @keyframes pop{ from{opacity:0;transform:scale(.94) translateY(8px);} to{opacity:1;transform:none;} }
+    .confirm-ico{
+      width:42px; height:42px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:1rem;
+    }
+    .confirm-ico.danger{ background:#fee2e2; color:#dc2626; }
+    .confirm-ico.warn{ background:#fef3c7; color:#d97706; }
+    .confirm-ico.info{ background:rgba(40,184,148,.12); color:var(--wb-primary-d); }
+    table.min-w{ min-width:680px; }
+    .model-limit-table{ min-width:1380px; }
+    .model-limit-table th:nth-child(1){ min-width:100px; }
+    .model-limit-table th:nth-child(2){ min-width:145px; }
+    .model-limit-table th:nth-child(3){ min-width:300px; }
+    .model-limit-table th:nth-child(4){ min-width:180px; }
+    .model-limit-table th:nth-child(5){ min-width:155px; }
+    .model-limit-table td{ overflow-wrap:anywhere; }
+    table.min-w-sm{ min-width:560px; }
+    table.min-w-lg{ min-width:940px; }
+    /* 状态胶囊：表格里被窄列挤压时不允许折行（「正常」竖成两行非常难看） */
+    .badge{
+      display:inline-flex; align-items:center; gap:.25rem;
+      padding:.125rem .5rem; border-radius:9999px;
+      font-size:.75rem; line-height:1.25rem;
+      white-space:nowrap; word-break:keep-all;
+      vertical-align:middle;
+    }
+    .ip-device-list{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .ip-device-item{ min-width:0; padding:12px; }
+    .ip-device-item code{ overflow-wrap:anywhere; }
+    .ip-device-meta{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px; }
+    @media (max-width:600px){ .ip-device-list{ grid-template-columns:minmax(0,1fr); } }
+    /* 状态/操作列不参与收缩，避免把胶囊压窄 */
+    td.col-status, th.col-status{ width:1%; white-space:nowrap; }
+    /* 分页按钮更大的可点区域 */
+    .pg-btn{ min-width:34px; height:34px; }
+    /* ==========================================================================
+       手机（<=640px）：紧凑排版
+       --------------------------------------------------------------------------
+       窄屏的核心矛盾是「宽表格 vs 窄屏」。策略：
+         * 表格保持横向滚动，**首列吸附**（sticky）—— 横滑时还能看出是哪一行；
+         * 页头/工具条纵向堆叠、按钮铺满（手指点得准）；
+         * 指标卡数值缩小一档，避免 24px 数字在 360px 宽里换行。
+       ========================================================================== */
+    @media (max-width:640px){
+      #modalBox{ width:94vw; padding:1rem; max-height:90vh; }
+      /* 报表：首列吸附 + 更紧凑，横向滑动更好管理 */
+      .card table td, .card table th{ padding:.55rem .6rem; }
+      .card table td:first-child, .card table th:first-child{
+        position:sticky; left:0; z-index:2; background:var(--surface);
+        box-shadow:1px 0 0 var(--border);
+      }
+      .card table thead th:first-child{ background:var(--surface-2); z-index:3; }
+      .overflow-x-auto{ -webkit-overflow-scrolling:touch; }
+      /* 页头：标题与按钮纵向堆叠，按钮铺满一行 */
+      .page-head{ flex-direction:column; align-items:stretch; gap:10px; }
+      .page-head > div:first-child{ flex:1 1 auto; }
+      .page-head > div:last-child{ width:100%; }
+      .page-head > div:last-child button{ flex:1 1 auto; }
+      .page-head h1{ font-size:19px; }
+      /* 旧结构的面板工具条同样堆叠 */
+      .panel-toolbar{ flex-direction:column; align-items:stretch; }
+      .panel-toolbar .tools{ width:100%; flex-wrap:wrap; }
+      .panel-toolbar .tools button{ flex:1 1 auto; }
+      /* 指标卡：数值降一档，2 列在 360px 下才放得下 */
+      .stat{ padding:12px 13px; }
+      .stat .stat-value{ font-size:20px; }
+      .stat .stat-sub{ font-size:10px; }
+      .stat-grid{ gap:10px; }
+      /* 滚动容器的固定高度：手机上 34rem 太高，缩到 60vh 更合适 */
+      .scroll-34, .scroll-28{ max-height:60vh; }
+      /* 卡片内边距收紧，给正文让出横向空间 */
+      .card.p-4{ padding:12px; }
+      .app-body{ padding:14px 12px 28px; }
+    }
+/* 列宽骨架：table-layout:fixed + 固定列宽。自动布局下列宽完全由内容决定，
+ * 每 30s 刷新一次数字/徽标变化都会让列边界左右漂移、互相挤压。固定后只有「积分到期」随剩余空间伸缩，
+ * 其余列宽恒定，表头与数值的左右边界永远对齐。
+ *
+ * 第二次调整（线上实测）：名称列原来写死 220px，而单元格里一行要塞
+ * 「188****6938 + 36 位 uuid + 状态小字」，nowrap 下必然被截成「188***…」；
+ * 同时「积分到期」没有宽度，自动布局把 582px 全给了它 —— 一边挤成省略号、
+ * 一边空一大片。现在改成「名称吃 34%、到期吃 22%、其余定宽」，并让名称行
+ * 允许换行（uuid 落到第二行），彻底消除截断。 */
+#accountTableWrap{max-height:70vh;overflow:auto;padding:0;}
+.acc-table{ width:100%; min-width:960px; table-layout:fixed; border-collapse:separate; border-spacing:0; font-size:12px; }
+.acc-table thead th:nth-child(1){ width:34%; min-width:300px; }  /* 名称 */
+.acc-table thead th:nth-child(2){ width:90px; }   /* 状态 */
+.acc-table thead th:nth-child(3){ width:96px; }   /* 总积分 */
+.acc-table thead th:nth-child(4){ width:104px; }  /* 剩余 */
+.acc-table thead th:nth-child(5){ width:22%; min-width:250px; }  /* 积分到期 */
+.acc-table thead th:nth-child(6){ width:272px; }  /* 操作（11 个图标按钮一排） */
+/* 全局 .col-status 是 width:1%+nowrap（给窄列用的）；账号表里冷却徽标可能
+ * 和状态胶囊叠放，固定列宽下允许换行竖排，避免溢出。 */
+.acc-table td.col-status{ width:auto; white-space:normal; }
+.acc-table thead th{
+  background:var(--surface-2); color:var(--fg-muted); font-weight:500;
+  text-align:left; padding:8px 10px; white-space:nowrap;
+  position:sticky; top:0; z-index:1;
+}
+.acc-table tbody td{
+  padding:7px 10px; border-top:1px solid var(--border-soft);
+  vertical-align:middle; white-space:nowrap;
+}
+/* 名称列：名字、uid、状态小字**允许换行**。
+ * 原来强行 nowrap 一行放三段内容，列一窄就整段截断（线上 220px 时的
+ * 「188***…」就是这么来的）。现在名字占第一行，uid/小字需要时自然落到
+ * 第二行 —— 宁可两行，也不要让用户看到一串省略号。 */
+.acc-table .c-name{
+  max-width:none; overflow:visible;
+}
+.acc-table .c-name .nm{
+  display:flex; align-items:baseline; gap:6px; min-width:0;
+  flex-wrap:wrap; row-gap:2px;
+}
+/* 名字：**弹性占位**，不再写死 max-width:130px。
+ * 写死会让「煜」「雪见」这类 1~2 字昵称后面留一大片空白，
+ * 而稍长一点的名字（6~8 字）又直接被截成「修复表情包上传与…」。
+ * 现在名字 flex:1 吃掉可用宽度，uid 只拿它需要的那一小段。 */
+.acc-table .c-name .nm > b{
+  font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  flex:0 1 auto; min-width:0; max-width:100%;
+}
+/* UUID：等宽 + 弱化。等宽让 0/O、1/l、- 的宽度完全一致，
+ * 一串 36 字符的 uuid 才不会左摇右晃；颜色降一档、字号 11px，
+ * 视觉焦点留在名字上。font-variant-numeric 兜底对齐数字段。 */
+.acc-table .c-uid{
+  font-family:var(--mono); font-size:11px; line-height:1.3;
+  font-variant-numeric:tabular-nums; letter-spacing:-.01em;
+  color:var(--fg-subtle);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  flex:1 1 auto; min-width:0; max-width:100%;
+}
+/* uid 末段是 uuid 的校验位，截断时保留可辨识度：hover 显示完整值（title 已带）。 */
+.acc-table .c-uid:hover{ color:var(--fg-muted); }
+/* 名称行里的状态小字（Key 独占/自动任务/初始化）：固定列宽下不许把行撑开，
+ * 超长省略号截断（完整信息都在 title 里）。 */
+.acc-table .c-name .nm small{
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  max-width:160px; flex:0 0 auto;
+}
+
+/* ==========================================================================
+   手机端：账号表 → **卡片列表**（彻底去掉横向滚动）
+   --------------------------------------------------------------------------
+   原来的移动端表现很糟：表格 min-width 960px + 首列 `position:sticky` 吸附，
+   而首列自己就有 230px 宽 —— 在 390px 的机身上它一个人就占了近 60%，
+   右边几列全被挤出去，必须左右拖，用户只能靠缩放浏览器比例才看得全。
+
+   这类「宽表格」在窄屏没有好结果：列再多也塞不下。所以窄屏直接换形态 ——
+   每个账号变成一张卡片，字段名用 `td::before { content: attr(data-label) }`
+   补在左侧，全部竖排，**不再产生任何横向滚动**。
+   （用 CSS 复用同一份 DOM，不额外写一套渲染逻辑，避免两处漂移。）
+   ========================================================================== */
+@media (max-width:640px){
+  .acc-table{ min-width:0 !important; }
+  .acc-table thead{ display:none; }
+  .acc-table, .acc-table tbody, .acc-table tr, .acc-table td{ display:block; width:auto; }
+  .acc-table tbody tr{
+    border:1px solid var(--border); border-radius:12px;
+    background:var(--surface); padding:10px 12px; margin-bottom:10px;
+  }
+  .acc-table tbody td{
+    border:0; padding:4px 0; white-space:normal;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    text-align:right;
+  }
+  /* 字段名：小字灰色，固定不缩，保证对齐好看 */
+  .acc-table tbody td::before{
+    content:attr(data-label);
+    flex:0 0 auto; font-size:11px; color:var(--fg-subtle); text-align:left;
+  }
+  /* 首列当卡片标题：占满整行、不显示字段名、允许折行 */
+  .acc-table tbody td.c-name{
+    max-width:none; padding-bottom:8px; margin-bottom:4px;
+    border-bottom:1px solid var(--border-soft);
+    display:block; text-align:left;
+  }
+  .acc-table tbody td.c-name::before{ content:none; }
+  .acc-table .c-name .nm > b{ max-width:none; white-space:normal; }
+  .acc-table .c-name .nm{ flex-wrap:wrap; }
+  /* uid 在窄屏允许换行显示全，别再截断 */
+  .acc-table .c-uid{ max-width:none; white-space:normal; word-break:break-all; }
+  /* 到期那一格里的小字说明允许换行 */
+  .acc-exp{ flex-wrap:wrap; white-space:normal; justify-content:flex-end; }
+  /* 操作按钮右对齐、可换行 */
+  .acc-table tbody td.c-ops{ flex-wrap:wrap; justify-content:flex-end; padding-top:8px; }
+  .acc-table .c-ops button{ padding:6px; font-size:14px; }
+  .acc-table tbody td.c-ops::before{ align-self:center; }
+}
+/* 操作按钮：图标密集但可点区域够大 */
+.acc-table .c-ops{ text-align:right; }
+.acc-table .c-ops button{
+  padding:3px 4px; border-radius:6px; font-size:12px; line-height:1;
+  transition:background .12s;
+}
+.acc-table .c-ops button:hover{ background:var(--surface-2); }
+/* 到期单元格：单行徽标 + 说明，不换行。固定列宽下说明文字省略号截断，
+ * 「· N 包」计数不缩（完整包列表在悬停 tooltip 里）。 */
+.acc-exp{
+  display:flex; align-items:center; gap:6px; white-space:nowrap;
+}
+.acc-exp .acc-exp-note{ font-size:11px; color:var(--fg-subtle); }
+.acc-table .acc-exp .acc-exp-note{
+  min-width:0; overflow:hidden; text-overflow:ellipsis; flex:0 1 auto;
+}
+.acc-table .acc-exp .acc-exp-note:last-child{ flex:0 0 auto; }
+.acc-table .billing-state{
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+    /* 图表 tooltip（自绘：原生 <title> 延迟长、样式不可控） */
+    #chartTip{
+      position:fixed; z-index:80; pointer-events:auto; display:none;
+      background:var(--surface); color:var(--fg); font-size:11px; line-height:1.5;
+      padding:.4rem .6rem; border-radius:8px; width:max-content;
+      max-width:calc(100vw - 16px); max-height:calc(100dvh - 16px); overflow:auto;
+      border:1px solid var(--border); box-shadow:var(--sh-pop); user-select:text; overflow-wrap:anywhere;
+    }
+    .chart-hit{ cursor:pointer; }
+    .chart-hit:hover{ opacity:.85; }
+    input,select,textarea{ outline:none; }
+    input:focus,select:focus,textarea:focus{ border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft); }
+    /* Keep the upload dialog and its controls in the same document so cached desktop CSS cannot remove them. */
+.upload-file-input{display:block;width:100%;min-width:0;margin-top:12px;font-size:12px;color:var(--fg-muted)}
+.upload-file-input::file-selector-button{margin-right:12px;padding:9px 14px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);color:var(--fg);font:inherit;cursor:pointer}
+.upload-footer{display:flex;align-items:center;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);flex-wrap:wrap}
+.upload-submit{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 18px;border:1px solid transparent;border-radius:10px;background:var(--brand-grad);color:#fff;font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;box-shadow:0 2px 5px rgba(15,23,42,.12);transition:filter .15s,box-shadow .15s}
+.upload-submit:hover{filter:brightness(1.06);}
+.upload-submit:focus-visible,.upload-cancel:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+.upload-submit:disabled{opacity:.65;cursor:wait;box-shadow:none}
+.upload-footer-note{flex:1;min-width:0;font-size:11px;line-height:1.6;color:var(--fg-muted)}
+.upload-cancel{margin-left:auto;min-height:40px;padding:0 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--fg-muted);font-size:13px;cursor:pointer}
+.upload-cancel:hover{background:var(--surface-2);color:var(--fg)}
+.upload-result{margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--fg-muted)}
+@media(max-width:480px){.upload-footer{gap:10px}.upload-footer-note{flex-basis:100%;order:3}.upload-file-input::file-selector-button{padding:8px 10px;margin-right:8px}}
