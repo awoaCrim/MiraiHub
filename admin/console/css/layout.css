@@ -61,10 +61,35 @@
   .sub-tabs { padding:0 2px; min-height:42px; }
   .sub-tab { padding:0 10px; font-size:13px; }
   .topbar-platform .ui-select { min-width:0; }
-  /* 窄屏顶栏只放操作：位置已经由汉堡栏的当前分组 + 子标签条表达，
-     这里再放标题会被挤成竖排（实测 390px 下「账 / 号」两行）。 */
-  .desktop-topbar .topbar-heading { display:none; }
-  .desktop-topbar { justify-content:flex-end; min-height:0; padding:10px 12px; }
+  /* 窄屏：顶栏操作已由 05-nav.js 并入汉堡栏，位置由汉堡栏分组名 + 子标签条表达；
+     顶栏标题留着会被挤成竖排（实测 390px 下「账 / 号」两行）。 */
+  .desktop-topbar { display:none; }
+  .app-side .topbar-actions { gap:6px; margin-left:auto; }
+  .app-side .topbar-status { display:none; }
   .topbar-endpoint span { display:none; }
   .topbar-actions button.topbar-endpoint { width:36px; padding:0; }
+}
+
+/* ==========================================================================
+   统一页面骨架：页头 = 一行说明 + 右侧操作
+   --------------------------------------------------------------------------
+   页面名称由侧栏分组 + 子标签表达，页头不再写大标题（原来同一页面的名字在
+   顶栏、页头各出现一次，移动端算上汉堡栏是三次）。
+   结构：<header class="page-intro"><div><p>说明</p></div><div>操作…</div></header>
+   ========================================================================== */
+.page-intro {
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
+  gap:10px 20px; margin:0 0 16px; min-height:36px;
+}
+.page-intro > div:first-child { flex:1 1 420px; min-width:0; }
+.page-intro p { margin:0; font-size:12.5px; line-height:1.65; color:var(--fg-muted); }
+.page-intro > :not(:first-child),
+.page-intro-actions > div { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.page-intro > :not(:first-child) { flex:0 0 auto; }
+/* 原来桌面壳把旧页头整个隐藏（标题与顶栏重复），新页头只剩说明与操作，需要显示 */
+.desktop-mode .page-intro { display:flex; }
+
+@media (max-width:900px) {
+  .page-intro { align-items:stretch; }
+  .page-intro > :not(:first-child) { width:100%; }
 }

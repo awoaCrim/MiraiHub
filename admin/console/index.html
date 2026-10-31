@@ -141,7 +141,6 @@
       <!-- 子标签条：当前分组内的页面（单页分组时隐藏），由 renderNavChrome 渲染 -->
       <nav class="sub-tabs" id="subTabs" role="tablist" aria-label="页面" hidden></nav>
       <div class="app-body">
-        <section id="overview" class="stat-grid block-gap"></section>
 
     <!-- 总览面板 —— 布局与信息密度参照 keybuddy.html：
          运行状态条 → 告警横幅 → 2 列卡片墙（剩余积分 / 用量 / 模型额度 / 缓存命中 / 账号监测）。
@@ -263,10 +262,8 @@
          上游封号常常连坐（一次违规对话可能连带整批账号），
          所以这里不仅要「看」，还要能一键暂停，避免继续送人头。 -->
     <section id="panel-sentinel" class="hidden">
-      <header class="page-head">
-        <div>
-          <h1>风控哨兵</h1>
-          <p>实时监测上游封控信号（403 / 11140 / 4015 等）与每个平台的请求结果。
+      <header class="page-intro">
+        <div><p>实时监测上游封控信号（403 / 11140 / 4015 等）与每个平台的请求结果。
             同一窗口内多个账号被风控时判定为批次级封控，可立即暂停该平台止损。</p>
         </div>
         <div class="sentinel-head-actions">
@@ -344,10 +341,8 @@
          哪个平台积分/额度多的、快到期/结束的平台优先，
          然后可以禁用某个网关，这样就不能再用它的模型权益。」 -->
     <section id="panel-gateway" class="hidden">
-      <header class="page-head">
-        <div>
-          <h1>平台网关</h1>
-          <p>配置跨平台调度策略：一个 Key 请求同一个模型时，先交给哪个平台。
+      <header class="page-intro">
+        <div><p>配置跨平台调度策略：一个 Key 请求同一个模型时，先交给哪个平台。
             禁用的平台不参与调度，但其账号仍可查看与管理。</p>
         </div>
         <div class="gw-head-actions">
@@ -461,10 +456,8 @@
          区域 + 平台专属动作 + 该平台概览）本身就是一屏内容，混在账号列表
          上方会让「我在看哪个平台」和「我在管哪个账号」两件事互相干扰。 -->
     <section id="panel-platforms" class="hidden">
-      <header class="page-head">
-        <div>
-          <h1>平台管理</h1>
-          <p>在这里切换平台与区域。切换后，账号池 / 使用记录 / 用量日志 / 积分到期
+      <header class="page-intro">
+        <div><p>在这里切换平台与区域。切换后，账号池 / 使用记录 / 用量日志 / 积分到期
             都只统计该平台。</p>
         </div>
       </header>
@@ -496,12 +489,13 @@
 
     <!-- 账号面板 -->
     <section id="panel-accounts">
-      <header class="page-head">
-        <div>
-          <h1>账号池</h1>
-          <p id="accountPoolSubtitle">统一管理账号、可用积分与登录状态。</p>
+      <header class="page-intro">
+        <div><p id="accountPoolSubtitle">统一管理账号、可用积分与登录状态。</p>
         </div>
       </header>
+      <!-- 账号池 KPI（loadAccounts 渲染）。原来挂在所有面板之上、靠 CSS 只在
+           账号池 / 积分到期显示 —— 积分到期因此出现两排几乎相同的指标卡。 -->
+      <div id="overview" class="stat-grid block-gap"></div>
       <div class="account-intake">
         <div class="intake-copy">
           <h2>添加与迁移账号</h2>
@@ -675,11 +669,12 @@
     </section>
 
     <section id="panel-ip" class="hidden">
-      <div class="flex flex-wrap justify-between items-center mb-3 gap-2 panel-toolbar">
-        <h2 class="font-semibold">IP 管理</h2>
+      <header class="page-intro">
+        <div><p>封禁后，该 IP 的全部 /v1 与 /gw 请求直接返回 403「该 IP 已被封禁」，在鉴权和转发上游之前拦截。</p></div>
+        <div class="page-intro-actions">
         <button type="button" onclick="WBIP.load()" class="console-btn quiet"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span>刷新</button>
-      </div>
-      <p class="text-xs text-slate-400 mb-3">封禁后，该 IP 的全部 /v1 与 /gw 请求直接返回 403「该 IP 已被封禁」，在鉴权和转发上游之前拦截。</p>
+        </div>
+      </header>
       <form id="ipBlockForm" class="card p-4 flex flex-wrap gap-3 items-end mb-4" onsubmit="event.preventDefault();WBIP.add()">
         <label class="flex flex-col gap-1 text-sm">IP 地址<input id="ipBlockAddress" required maxlength="64" placeholder="IPv4 或 IPv6" class="border rounded-lg px-3 py-2" /></label>
         <label class="flex flex-col gap-1 text-sm flex-1">备注<input id="ipBlockNote" maxlength="255" placeholder="例如：异常刷请求" class="border rounded-lg px-3 py-2" /></label>
@@ -796,15 +791,16 @@
 
     <!-- 模型配置面板 -->
     <section id="panel-models" class="hidden">
-      <div class="flex flex-wrap justify-between items-center mb-3 gap-2 panel-toolbar">
-        <h2 class="font-semibold">模型白名单配置</h2>
+      <header class="page-intro">
+        <div><p>提示：未配置任何模型规则时放行全部模型；配置后仅白名单内模型可用，请求不在名单的模型返回「模型不存在」错误。</p></div>
+        <div class="page-intro-actions">
         <div class="flex flex-wrap gap-2 tools">
-          <button onclick="syncModels()" class="text-sm px-3 py-1.5 rounded-lg btn-primary"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/></svg></span> 从后端同步</button>
-          <button onclick="enableAllModels(true)" class="text-sm px-3 py-1.5 rounded-lg border hover:bg-slate-50"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></svg></span> 全部启用</button>
-          <button onclick="enableAllModels(false)" class="text-sm px-3 py-1.5 rounded-lg border hover:bg-slate-50"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.929 4.929 19.07 19.071"/><circle cx="12" cy="12" r="10"/></svg></span> 全部禁用</button>
+          <button onclick="syncModels()" class="console-btn primary"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/></svg></span> 从后端同步</button>
+          <button onclick="enableAllModels(true)" class="console-btn"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></svg></span> 全部启用</button>
+          <button onclick="enableAllModels(false)" class="console-btn"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.929 4.929 19.07 19.071"/><circle cx="12" cy="12" r="10"/></svg></span> 全部禁用</button>
         </div>
-      </div>
-      <p class="text-xs text-slate-400 mb-3">提示：未配置任何模型规则时放行全部模型；配置后仅白名单内模型可用，请求不在名单的模型返回「模型不存在」错误。</p>
+        </div>
+      </header>
       <div class="model-search-bar">
         <span class="model-search-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -844,16 +840,14 @@
 
     <!-- 分组管理面板 -->
     <section id="panel-groups" class="hidden">
-      <div class="flex flex-wrap justify-between items-center mb-3 gap-2 panel-toolbar">
-        <h2 class="font-semibold">模型分组</h2>
+      <header class="page-intro">
+        <div><p>分组用于限定 API Key 可用的模型范围。创建 Key 时选择分组即可；<b>不选分组</b>表示可用全部启用模型。 绑定分组后该 Key 只能调用组内模型，调用组外模型返回 403（model_not_in_group）。</p></div>
+        <div class="page-intro-actions">
         <div class="flex flex-wrap gap-2 tools">
-          <button onclick="openGroupEditor()" class="text-sm px-3 py-1.5 rounded-lg btn-primary"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span> 新建分组</button>
+          <button onclick="openGroupEditor()" class="console-btn primary"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span> 新建分组</button>
         </div>
-      </div>
-      <p class="text-xs text-slate-400 mb-3">
-        分组用于限定 API Key 可用的模型范围。创建 Key 时选择分组即可；<b>不选分组</b>表示可用全部启用模型。
-        绑定分组后该 Key 只能调用组内模型，调用组外模型返回 403（model_not_in_group）。
-      </p>
+        </div>
+      </header>
       <div class="card overflow-x-auto max-h-[70vh]">
         <table class="tbl min-w">
           <thead class="bg-slate-50 text-slate-500 text-left sticky top-0">
@@ -870,15 +864,16 @@
 
     <!-- 使用记录面板 -->
     <section id="panel-usage" class="hidden">
-      <div class="flex flex-wrap justify-between items-center mb-3 gap-2 panel-toolbar">
-        <h2 class="font-semibold">使用记录</h2>
+      <header class="page-intro">
+        <div><p>统计平台全部 Key 的用量：请求数、Token、积分与平均耗时。数据来自本地 usage_logs，随请求实时累计。</p></div>
+        <div class="page-intro-actions">
         <div class="flex flex-wrap gap-2 tools items-center">
           <div class="w-32" id="usageDaysSel"></div>
           <div class="w-28" id="usageGrainSel"></div>
-          <button onclick="loadUsageStats()" class="text-sm px-3 py-1.5 rounded-lg border hover:bg-slate-50"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span> 刷新</button>
+          <button onclick="loadUsageStats()" class="console-btn"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span> 刷新</button>
         </div>
-      </div>
-      <p class="text-xs text-slate-400 mb-3">统计平台全部 Key 的用量：请求数、Token、积分与平均耗时。数据来自本地 usage_logs，随请求实时累计。</p>
+        </div>
+      </header>
 
       <!-- 筛选：按 平台 / Key / 模型 / 端点。筛选后所有图与卡片同步变化。
            平台放第一位：它是「这张图是全平台合计，还是只看某一家」的开关。
@@ -965,11 +960,12 @@
     <section id="panel-growth" class="hidden"><div id="growthCenter" class="gc-page"></div></section>
 
     <section id="panel-schedules" class="hidden">
-      <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-        <h2 class="font-semibold">定时任务</h2>
-        <button onclick="openAddSchedule()" class="text-sm px-3 py-1.5 rounded-lg btn-primary"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span> 新建任务</button>
-      </div>
-      <p class="text-xs text-slate-400 mb-3">定时统计积分、同步模型、各平台签到与保活。调度线程随服务启动运行，到点自动执行并回填结果。列表按平台分组，不随顶部平台切换隐藏。</p>
+      <header class="page-intro">
+        <div><p>定时统计积分、同步模型、各平台签到与保活。调度线程随服务启动运行，到点自动执行并回填结果。列表按平台分组，不随顶部平台切换隐藏。</p></div>
+        <div class="page-intro-actions">
+        <button onclick="openAddSchedule()" class="console-btn primary"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span> 新建任务</button>
+        </div>
+      </header>
       <div class="card overflow-hidden">
         <div class="overflow-x-auto">
           <table class="tbl min-w-lg">
@@ -986,15 +982,13 @@
 
     <!-- 用量日志面板 -->
     <section id="panel-logs" class="hidden">
-      <div class="page-head">
-        <div>
-          <h1>用量日志</h1>
-          <p>筛选条件下方是**请求动态**（实时刷新，正在发生的请求）；再往下是按账号汇总与落库记录表格，可筛选、导出。</p>
+      <div class="page-intro">
+        <div><p>筛选条件下方是<b>请求动态</b>（实时刷新，正在发生的请求）；再往下是按账号汇总与落库记录表格，可筛选、导出。</p>
         </div>
         <div id="logActions" class="flex flex-wrap gap-2">
-          <button onclick="exportLogs()" class="px-3 py-1.5 rounded-lg border text-sm" data-tooltip="导出当前筛选结果为 CSV"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg></span> 导出</button>
-          <button onclick="exportLogs(true)" class="px-3 py-1.5 rounded-lg border text-sm" data-tooltip="含脱敏诊断，最多导出最近 1000 条">导出诊断</button>
-          <button onclick="loadLogs(1)" class="px-3 py-1.5 rounded-lg border text-sm" data-tooltip="刷新"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span> 刷新</button>
+          <button onclick="exportLogs()" class="console-btn" data-tooltip="导出当前筛选结果为 CSV"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg></span> 导出</button>
+          <button onclick="exportLogs(true)" class="console-btn" data-tooltip="含脱敏诊断，最多导出最近 1000 条">导出诊断</button>
+          <button onclick="loadLogs(1)" class="console-btn" data-tooltip="刷新"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span> 刷新</button>
         </div>
       </div>
 
@@ -1104,17 +1098,17 @@
 
     <!-- 客户端参数面板：UA / 版本号 / 风控头 / 桌面指纹 -->
     <section id="panel-client" class="hidden">
-      <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-        <h2 class="font-semibold">客户端参数（UA / 版本号 / 风控头）</h2>
-        <div class="flex flex-wrap gap-2">
-          <button onclick="detectClient()" class="text-sm px-3 py-1.5 rounded-lg border hover:bg-slate-50" data-tooltip="扫描本机安装的 WorkBuddy，读取真实的版本号与风控配置"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></span> 探测本机客户端</button>
-          <button onclick="toggleClientSource()" id="clientSourceBtn" class="text-sm px-3 py-1.5 rounded-lg border hover:bg-slate-50" data-tooltip="切换取值策略"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></span> 取值策略</button>
-          <button onclick="saveClientProfile()" class="text-sm px-3 py-1.5 rounded-lg btn-primary"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg></span> 保存</button>
+      <header class="page-intro">
+        <div><p>上游请求携带的客户端 UA、版本号与风控头，需与真实客户端保持一致。</p></div>
+        <div class="page-intro-actions">
+          <button onclick="detectClient()" class="console-btn" data-tooltip="扫描本机安装的 WorkBuddy，读取真实的版本号与风控配置"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></span> 探测本机客户端</button>
+          <button onclick="toggleClientSource()" id="clientSourceBtn" class="console-btn" data-tooltip="切换取值策略"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></span> 取值策略</button>
+          <button onclick="saveClientProfile()" class="console-btn primary"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg></span> 保存</button>
           <button onclick="WBProfileTransfer.exportFile()" class="console-btn quiet">导出参数</button>
           <button onclick="WBProfileTransfer.chooseImport()" class="console-btn quiet">导入并启用</button>
-          <button onclick="resetClientProfile()" class="text-sm px-3 py-1.5 rounded-lg border hover:bg-slate-50" data-tooltip="清空已保存值，回到「优先现场探测」"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21"/><path d="m5.082 11.09 8.828 8.828"/></svg></span> 重置</button>
+          <button onclick="resetClientProfile()" class="console-btn" data-tooltip="清空已保存值，回到「优先现场探测」"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21"/><path d="m5.082 11.09 8.828 8.828"/></svg></span> 重置</button>
         </div>
-      </div>
+      </header>
 
       <div id="clientHint" class="card p-4 mb-3 text-xs text-slate-500"></div>
 
@@ -1173,7 +1167,6 @@
 
     <!-- 同步设置面板 -->
     <section id="panel-sync" class="hidden">
-      <h2 class="font-semibold mb-3">线上同步设置</h2>
       <div class="card p-5 max-w-2xl">
         <p class="text-xs text-slate-400 mb-4">本地数据视为最新。配置线上实例的 URL 与密钥（HMAC 签名），点击「同步到线上」把本地账号、模型配置<b>与客户端兼容参数（UA / 版本号 / 请求头）</b>推送过去。线上实例需配置相同密钥并通过 <code class="text-[11px]">/api/sync/receive</code> 接收。版本与产品字段从本机安装包读取，OS 与硬件字段按本机系统实测（仅在装了客户端的机器上有效）；线上服务器探测不到客户端，一律以同步过来的档案为准。</p>
         <label class="block text-sm mb-1">远程 URL</label>
@@ -1196,18 +1189,16 @@
 
     <!-- 积分到期面板：到期排行是观察视图，实际流量由可切换的调度策略决定。 -->
     <section id="panel-credits" class="hidden">
-      <div class="page-head">
-        <div>
-          <h1>积分到期</h1>
-          <p>按到期时间展示账号风险。实际新会话由下方调度策略分配；平台按 7 天判定「快到期」，这部分额度不用完就会作废。</p>
+      <div class="page-intro">
+        <div><p>按到期时间展示账号风险。实际新会话由下方调度策略分配；平台按 7 天判定「快到期」，这部分额度不用完就会作废。</p>
         </div>
         <div class="flex flex-wrap gap-2">
           <button onclick="loadCreditStats(true)" id="creditSyncBtn"
-                  class="text-sm px-3 py-1.5 rounded-lg btn-primary"
+                  class="console-btn primary"
                   data-tooltip="逐个账号重新采集上游积分包明细（串行，账号多时需要几十秒）">
-            <span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/></svg></span> 重新采集</button>
-          <button onclick="loadCreditStats()" class="text-sm px-3 py-1.5 rounded-lg border hover:bg-slate-50">
-            <span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span> 刷新</button>
+            <span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/></svg></span> 重新采集</button>
+          <button onclick="loadCreditStats()" class="console-btn">
+            <span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span> 刷新</button>
         </div>
       </div>
 
@@ -1309,7 +1300,7 @@
     </section>
 
     <section id="panel-journal" class="hidden">
-      <div class="page-head"><div><h1>积分流水</h1><p>查看奖励与余额变动，追溯每一笔积分。</p></div></div>
+      <div class="page-intro"><div><p>查看奖励与余额变动，追溯每一笔积分。</p></div></div>
       <div class="card journal-card">
         <div class="journal-filters">
           <div class="journal-field"><span id="journalAccountLabel">账号</span><select id="journalAccount" aria-label="账号"><option value="">全部账号</option></select></div>
@@ -1325,17 +1316,15 @@
       </div>
     </section>
     <section id="panel-maintenance" class="hidden">
-      <div class="page-head"><div><h1>更新与备份</h1><p>检查正式版本、备份数据库，并按部署方式执行升级。</p></div><button class="console-btn" onclick="WBReview.loadUpdate()">检查更新</button></div>
+      <div class="page-intro"><div><p>检查正式版本、备份数据库，并按部署方式执行升级。</p></div><button class="console-btn" onclick="WBReview.loadUpdate()">检查更新</button></div>
       <div id="maintenanceInfo" aria-live="polite">点击检查更新获取版本信息。</div>
     </section>
     <!-- 预警管理：把哨兵的封控信号推到邮件 / 飞书 / QQ 机器人。
          哨兵负责「发现」，这里负责「叫醒人」—— 没有这一步，连坐封号
          只会在面板里静静躺着，等有人偶然打开控制台才被发现。 -->
     <section id="panel-alerts" class="hidden">
-      <header class="page-head">
-        <div>
-          <h1>预警管理</h1>
-          <p>风控哨兵判定批次封控时，通过下列渠道通知管理员。同一平台的同一业务码
+      <header class="page-intro">
+        <div><p>风控哨兵判定批次封控时，通过下列渠道通知管理员。同一平台的同一业务码
             10 分钟内只通知一次，避免连坐时被刷屏。</p>
         </div>
         <div class="alert-head-actions">
@@ -1404,7 +1393,6 @@
 
     <!-- 设置面板 -->
     <section id="panel-settings" class="hidden">
-      <h2 class="settings-title">管理员设置</h2>
       <div class="settings-section runtime-config-block">
         <h3>运行配置<span class="runtime-config-sub">常用 .env 项动态改（exe / apk 部署没有配置文件，改这里即时生效；标「重启」的项重启后套用）</span></h3>
         <div id="runtimeConfigHost"><p class="fs-12" style="color:var(--fg-subtle)">加载中…</p></div>

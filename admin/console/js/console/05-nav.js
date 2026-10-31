@@ -123,8 +123,22 @@ document.addEventListener("click", e => {
   if (tab) activateTab(tab.dataset.tab);
 });
 
-/* 子标签条吸附在顶栏下方：顶栏高度随窗口形态变化（浏览器 90px / 桌面壳
- * 64px / 窄屏 74px / 安卓 mobile-mode 直接隐藏），用实测值而不是写死。 */
+/* 窄屏：顶栏操作并入汉堡栏（与安卓 mobile.js 的做法一致），顶栏整体隐藏，
+ * 省掉一整行只放两个图标按钮的空栏。 */
+const _compactNav = window.matchMedia("(max-width:900px)");
+function _arrangeTopbar() {
+  const actions = document.querySelector(".topbar-actions");
+  const header = document.querySelector(".desktop-topbar");
+  const side = $("#appSide");
+  if (!actions || !header || !side) return;
+  (_compactNav.matches ? side : header).appendChild(actions);
+}
+_compactNav.addEventListener("change", _arrangeTopbar);
+_arrangeTopbar();
+
+/* 子标签条吸附在顶栏下方。sticky 的参照是滚动容器 .app-main（console.css），
+ * 顶栏就在它里面，所以偏移 = 顶栏实测高度（浏览器 90px / 桌面壳 64px）；
+ * 窄屏顶栏隐藏，高度为 0，汉堡栏在 .app-main 之外，不参与计算。 */
 (() => {
   const header = document.querySelector(".desktop-topbar");
   if (!header || !window.ResizeObserver) return;

@@ -1440,7 +1440,6 @@ button[data-tooltip], a[data-tooltip], [role="button"][data-tooltip] { cursor: p
   border:1px solid var(--border); border-radius:8px; padding:7px 9px;
   background:var(--surface); color:var(--fg); max-width:100%;
 }
-:root:not([data-active-tab="accounts"]):not([data-active-tab="credits"]) #overview { display:none; }
 .journal-card { padding:0; }
 .journal-filters { display:grid; grid-template-columns:minmax(150px,1fr) minmax(180px,1.3fr) minmax(140px,.8fr); gap:16px; padding:22px; align-items:end; }
 .journal-field { min-width:0; display:flex; flex-direction:column; gap:7px; }
