@@ -39,24 +39,6 @@ document.addEventListener("wb-platform-change", () => {
    会同时存在 CSS 与 JS 两处判断，迟早不一致。
    ========================================================================== */
 
-/**
- * 取某个面板的**纯文字**名称（用于移动端顶栏）。
- *
- * 为什么不用 `el.textContent`：导航项里可能夹着角标数字
- * （「积分到期」右边有个待处理数），textContent 会把数字一起读进来，
- * 顶栏就显示成「积分到期 3」。这里只取**第一个文本节点**。
- */
-function _sideTabLabel(name) {
-  const el = document.querySelector(`.side-item[data-tab="${name}"]`);
-  if (!el) return name;
-  for (const node of el.childNodes) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      const t = (node.textContent || "").trim();
-      if (t) return t;
-    }
-  }
-  return name;
-}
 function toggleSideMenu(ev) {
   if (ev) ev.stopPropagation();
   const shell = document.querySelector(".app-shell");
@@ -78,11 +60,10 @@ function closeSideMenu() {
   if (btn) btn.setAttribute("aria-expanded", "false");
 }
 
-// 导航项：带 data-tab 的是面板切换（「退出登录」没有 data-tab，走自己的 onclick）。
-// 用 data-tab 存在性判断，比维护类名白名单更不容易漏。
+// 导航项：带 data-nav 的是分组切换（「退出登录」没有 data-nav，走自己的 onclick）。
 document.querySelectorAll(".side-item").forEach(b => {
   b.addEventListener("click", () => {
-    if (b.dataset.tab) activateTab(b.dataset.tab);
+    if (b.dataset.nav) navGo(b.dataset.nav);
     closeSideMenu();          // 点任意项后都收起抽屉
   });
 });

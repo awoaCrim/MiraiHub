@@ -215,11 +215,6 @@ window.WBDesktop = (() => {
     if (!releases) { releases = {...data, releases:[]}; label(); }
   }).catch(() => {});
   window.addEventListener('pywebviewready', initializeNative);
-  document.getElementById('sideNav').addEventListener('click', event => {
-    const item = event.target.closest('[data-tab]');
-    if (item) document.getElementById('topbarTitle').textContent = [...item.childNodes]
-      .filter(node => node.nodeType === Node.TEXT_NODE).map(node => node.textContent).join('').trim();
-  });
   if (window.pywebview?.api) initializeNative();
   return {openUpdates, retryLocal: initializeNative, checkUpdatesAtStartup: () => check(true)};
 })();

@@ -712,19 +712,10 @@ function activateTab(name, opts) {
   document.documentElement.dataset.activeTab = name;
   window.WBDateTimePicker?.close();
   window.WBFilterCombobox?.close();
-  // 侧栏导航：active 由 .side-item.active 表达
-  document.querySelectorAll(".side-item").forEach(x => {
-    x.classList.toggle("active", x.dataset.tab === name);
-  });
   TABS.forEach(t => { const el = $(`#panel-${t}`); if (el) el.classList.toggle("hidden", t !== name); });
-
-  // 移动端顶栏的「当前面板名」：抽屉收起时用户也得知道自己停在哪。
-  // 用 data-label / 首个文本节点，而**不是** textContent —— 后者会把
-  // 「积分到期」旁边的角标数字一起读进去（实测变成 "积分到期 3"）。
-  const cur = $("#sideCurrent");
-  if (cur) cur.textContent = _sideTabLabel(name);
-  const topTitle = $("#topbarTitle");
-  if (topTitle) topTitle.textContent = _sideTabLabel(name);
+  // 侧栏分组高亮、子标签条、顶栏标题、平台切换器（见 05-nav.js）
+  renderNavChrome(name);
+  if (PLATFORM_SCOPED_TABS.has(name)) ensurePlatforms().then(renderTopbarPlatform);
 
   if (!opts || opts.updateUrl !== false) {
     try {

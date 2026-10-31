@@ -411,6 +411,11 @@ function setSideDot(selector, n) {
     dot.classList.add("hidden");
     dot.textContent = "0";
   }
+  // 同一个数也显示在对应子标签上（见 05-nav.js 的 TAB_DOTS）
+  document.querySelectorAll(`[data-dot-of="${selector}"]`).forEach(mirror => {
+    mirror.classList.toggle("hidden", value <= 0);
+    mirror.textContent = dot.textContent;
+  });
 }
 
 /* 区间切换：只改状态再重取，不重载页面 */

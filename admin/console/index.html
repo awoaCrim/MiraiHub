@@ -41,6 +41,7 @@
   <link rel="stylesheet" href="/admin/assets/agent.css?v=20261027-agent-1" />
   <link rel="icon" href="/api/app/icon" type="image/svg+xml" />
   <link rel="stylesheet" href="/admin/assets/desktop.css?v=20261026-no-hover-border-1" />
+  <link rel="stylesheet" href="/admin/assets/css/layout.css?v=20261031-layout-1" />
   <script>if(new URLSearchParams(location.search).get('desktop')==='1') document.documentElement.classList.add('desktop-mode');</script>
 </head>
 <body>
@@ -88,56 +89,23 @@
         </div>
       </div>
       <!-- 移动端顶栏显示的当前面板名（抽屉收起时也知道自己在哪） -->
-      <span class="side-current" id="sideCurrent">平台管理</span>
+      <span class="side-current" id="sideCurrent">概览</span>
       <nav class="side-nav" id="sideNav">
         <!-- 抽屉头部：左侧抽屉没有顶栏承接，需要自己的标题与关闭按钮 -->
         <div class="side-nav-head">
           <span>导航菜单</span>
           <button onclick="closeSideMenu()" aria-label="关闭菜单"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span></button>
         </div>
-        <!-- 平台管理：放在**最上面**。它是全局数据上下文的开关，
-             每次进来第一件事就是确认「我现在在哪个平台」，所以排在内容型
-             面板（账号池/用量/日志）之前。 -->
-        <div class="side-group">
-          <div class="side-group-title">总览</div>
-        <button class="side-item" data-tab="overview"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 4-6"/></svg></span> 概览</button>
-        <button class="side-item" data-tab="sentinel"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 6v6c0 5 3.8 9.2 9 10 5.2-.8 9-5 9-10V6z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></span> 风控哨兵<span class="side-dot hidden" id="sideSentinelDot">0</span></button>
-        </div>
-        <div class="side-group">
-          <div class="side-group-title">平台</div>
-        <button class="side-item" data-tab="platforms"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span> 平台管理</button>
-        <button class="side-item" data-tab="gateway"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><path d="m5.6 5.6 2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg></span> 平台网关</button>
-        </div>
-        <div class="side-group">
-          <div class="side-group-title">账号</div>
-        <button class="side-item" data-tab="accounts"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3m2-17a3 3 0 0 1 0 6m2 4a5 5 0 0 1 2 4v3"/></svg> 账号池</button>
-        <button class="side-item" data-tab="credits"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12M6 22h12M7 2v5l10 10v5M17 2v5L7 17v5"/></svg> 积分到期
-          <span class="side-dot hidden" id="sideExpiringDot">0</span></button>
-        <button class="side-item" data-tab="journal"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h.01"/><path d="M3 12h.01"/><path d="M3 19h.01"/><path d="M8 5h13"/><path d="M8 12h13"/><path d="M8 19h13"/></svg></span> 积分流水</button>
-        <button class="side-item" data-tab="growth"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9m0 5C3 18 2 10 3 4c6 0 9 3 9 8m0 5c9 1 10-7 9-13-6 0-9 3-9 8"/></svg> 成长计划</button>
-        </div>
-        <div class="side-group">
-          <div class="side-group-title">调用</div>
-        <button class="side-item" data-tab="usage"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9v9Zm-5-9a9 9 0 0 1 5 5h-5Z"/></svg> 使用记录</button>
-        <button class="side-item" data-tab="logs"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg> 用量日志</button>
-        <button class="side-item" data-tab="keys"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="m12 12 9 9m-5-5 3-3m-1 5 3-3"/></svg> API Keys</button>
-        <button class="side-item" data-tab="ip"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 22V2"/></svg></span> IP 管理</button>
-        </div>
-        <div class="side-group">
-          <div class="side-group-title">配置</div>
-        <button class="side-item" data-tab="models"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg></span> 模型配置</button>
-        <button class="side-item" data-tab="groups"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 5-10 5L2 8Zm-9 10 9 5 9-5M3 18l9 5 9-5"/></svg> 分组管理</button>
-        <button class="side-item" data-tab="agent"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span> 智能体</button>
-        <button class="side-item" data-tab="schedules"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4v5h5m-5 0a9 9 0 1 1 0 7M12 7v5l3 2"/></svg> 定时任务</button>
-        </div>
-        <div class="side-group">
-          <div class="side-group-title">系统</div>
-        <button class="side-item" data-tab="client"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 16 0m-13 5v-5a5 5 0 0 1 10 0v3m-7 5v-8a2 2 0 0 1 4 0v5m-1 5a12 12 0 0 0 4-4M3 16v-1"/></svg> 客户端参数</button>
-        <button class="side-item" data-tab="sync"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18a5 5 0 1 1 1-10 6 6 0 0 1 11 1 4 4 0 0 1 0 8m-6 4V11m-4 4 4-4 4 4"/></svg> 同步设置</button>
-        <button class="side-item" data-tab="alerts"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span> 预警管理</button>
-        <button class="side-item" data-tab="settings"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-1 3-3 1-2 3 2 2v3l2 2 3-1 2 2 3-1 1-3 3-1 1-3-3-2V7l-3-2-2 1Z"/><circle cx="12" cy="12" r="3"/></svg> 设置</button>
-        <button class="side-item" data-tab="maintenance"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/></svg></span> 更新与备份</button>
-        </div>
+        <!-- 一级入口按「要做什么」分组；组内页面在顶栏下方的子标签里切换。
+             分组定义与子页清单见 js/console/05-nav.js 的 NAV。 -->
+        <button class="side-item" data-nav="overview"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 4-6"/></svg></span> 概览</button>
+        <button class="side-item" data-nav="platform"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span> 平台</button>
+        <button class="side-item" data-nav="account"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3m2-17a3 3 0 0 1 0 6m2 4a5 5 0 0 1 2 4v3"/></svg> 账号<span class="side-dot hidden" id="sideExpiringDot">0</span></button>
+        <button class="side-item" data-nav="traffic"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9v9Zm-5-9a9 9 0 0 1 5 5h-5Z"/></svg> 调用</button>
+        <button class="side-item" data-nav="risk"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 6v6c0 5 3.8 9.2 9 10 5.2-.8 9-5 9-10V6z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></span> 风控<span class="side-dot hidden" id="sideSentinelDot">0</span></button>
+        <button class="side-item" data-nav="access"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="m12 12 9 9m-5-5 3-3m-1 5 3-3"/></svg> 接入</button>
+        <button class="side-item" data-nav="agent"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span> 智能体</button>
+        <button class="side-item" data-nav="system"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-1 3-3 1-2 3 2 2v3l2 2 3-1 2 2 3-1 1-3 3-1 1-3-3-2V7l-3-2-2 1Z"/><circle cx="12" cy="12" r="3"/></svg> 系统</button>
         <!-- 抽屉内的退出入口（移动端顶栏放不下，收进菜单更自然） -->
         <button class="side-item side-item-quit" onclick="logout()"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg></span> 退出登录</button>
         <div class="theme-controls mobile-theme-controls" role="group" aria-label="主题">
@@ -152,7 +120,7 @@
           <button type="button" data-theme-choice="light" onclick="WBTheme.set('light')" aria-label="浅色主题" aria-pressed="true" data-tooltip="浅色主题"><i class="fa-regular fa-sun" aria-hidden="true"></i></button>
           <button type="button" data-theme-choice="dark" onclick="WBTheme.set('dark')" aria-label="深色主题" aria-pressed="false" data-tooltip="深色主题"><i class="fa-regular fa-moon" aria-hidden="true"></i></button>
         </div>
-        <div id="proxyUrl" class="truncate mb-1-5"></div>
+        <div id="proxyUrl" hidden></div>
         <button id="appVersion" class="version-button" onclick="WBDesktop.openUpdates()" data-tooltip="检查更新与版本历史">v… · 检查更新</button>
         <button onclick="logout()" class="hover-lift browser-logout"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg></span>退出登录</button>
       </div>
@@ -162,13 +130,16 @@
 
     <main class="app-main">
       <header class="desktop-topbar">
-        <div class="topbar-heading pywebview-drag-region"><div class="topbar-breadcrumb">MiraiHub <span>/</span> 工作台</div><h2 id="topbarTitle">平台管理</h2></div>
+        <div class="topbar-heading pywebview-drag-region"><div class="topbar-breadcrumb">MiraiHub <span>/</span> 工作台</div><h2 id="topbarTitle">概览</h2></div>
         <div class="topbar-actions">
+          <div class="topbar-platform" id="topbarPlatform" hidden></div>
           <span class="topbar-status"><span></span><span id="topbarMode">服务已连接</span></span>
           <button type="button" class="topbar-endpoint" onclick="navigator.clipboard.writeText(location.origin+'/v1').then(()=>{this.querySelector('span').textContent='已复制 API 地址';setTimeout(()=>this.querySelector('span').textContent='复制 API 地址',1800)})" data-tooltip="复制当前 API 地址"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9h11v11H9zM4 15H3V3h12v1"/></svg><span>复制 API 地址</span></button>
           <button type="button" class="topbar-update" onclick="WBDesktop.openUpdates()" data-tooltip="版本与更新" aria-label="版本与更新"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 3M4 15l2 3a7 7 0 0 0 12-1"/></svg></button>
         </div>
       </header>
+      <!-- 子标签条：当前分组内的页面（单页分组时隐藏），由 renderNavChrome 渲染 -->
+      <nav class="sub-tabs" id="subTabs" role="tablist" aria-label="页面" hidden></nav>
       <div class="app-body">
         <section id="overview" class="stat-grid block-gap"></section>
 
@@ -1569,6 +1540,7 @@
 <script src="/admin/assets/model-metadata.js?v=20261023-image-types-2"></script>
 <script src="/admin/assets/usage-ip.js?v=20261031-r2"></script>
 <script src="/admin/assets/js/console/00-core.js?v=20261031-layout-1"></script>
+<script src="/admin/assets/js/console/05-nav.js?v=20261031-layout-1"></script>
 <script src="/admin/assets/js/console/10-overview.js?v=20261031-layout-1"></script>
 <script src="/admin/assets/js/console/20-sentinel-gateway.js?v=20261031-layout-1"></script>
 <script src="/admin/assets/js/console/30-context-nav.js?v=20261031-layout-1"></script>
@@ -1586,7 +1558,7 @@
 <script src="/static/vendor/marked-12.0.2.min.js"></script>
 <script src="/static/vendor/dompurify-3.4.17.min.js"></script>
 <script src="/admin/assets/release-notes.js?v=20261031-r2"></script>
-<script src="/admin/assets/desktop.js?v=20261031-r2"></script>
+<script src="/admin/assets/desktop.js?v=20261031-layout-1"></script>
 <script src="/admin/assets/profile-transfer.js?v=20261031-r2"></script>
 <script src="/admin/assets/ip-management.js?v=20261031-r2"></script>
 <script src="/admin/assets/key-ip.js?v=20261031-r2"></script>
@@ -1595,7 +1567,7 @@
      必须在 platform-switch.js **之前**加载 —— 后者要用 actionsFor()。 -->
 <script src="/admin/assets/traffic.js?v=20261029-r2"></script>
 <script src="/admin/assets/platform-actions.js?v=20261028-r10"></script>
-<script src="/admin/assets/platform-switch.js?v=20261028-r10"></script>
+<script src="/admin/assets/platform-switch.js?v=20261031-layout-1"></script>
 <script src="/admin/assets/agent.js?v=20261031-r2"></script>
 <script src="/admin/assets/js/console/99-boot.js?v=20261031-layout-1"></script>
 </body>

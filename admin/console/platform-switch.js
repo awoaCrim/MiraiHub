@@ -330,6 +330,8 @@ function actionsFor(spec) {
         });
     },
     current: function () { return { platform: state.platform, realm: state.realm }; },
+    /** 已加载的平台列表（副本），供顶栏平台切换器渲染。未加载时为空数组。 */
+    items: function () { return state.items.slice(); },
     spec: function () { return specOf(state.platform); },
     selector: function () { return window.WBPlatform.route(); },
     onChange: function (fn) {
