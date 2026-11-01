@@ -1340,6 +1340,8 @@ button[data-tooltip], a[data-tooltip], [role="button"][data-tooltip] { cursor: p
    开关组件优化：平滑过渡动画
    ========================================================================== */
 .model-switch {
+  /* 将透明复选框约束在开关内，避免撑出主内容区的滚动边界。 */
+  position: relative;
   display:inline-flex;
   align-items:center;
   gap:8px;
