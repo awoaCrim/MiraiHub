@@ -32,8 +32,9 @@ const TAB_LABELS = {
 
 /* 按「当前平台」过滤数据的面板：顶栏只在这些面板上显示平台切换器。
  * 调用 / 风控 / Keys 是跨平台视图，各自有页内「平台」筛选，再放一个全局
- * 切换器会让人分不清哪个生效。 */
-const PLATFORM_SCOPED_TABS = new Set(["overview", "platforms", "accounts", "credits", "models", "schedules"]);
+ * 切换器会让人分不清哪个生效。定时任务列出全部平台的任务（loadSchedules），
+ * 不受切换器影响，所以也不显示。 */
+const PLATFORM_SCOPED_TABS = new Set(["overview", "platforms", "accounts", "credits", "models"]);
 
 /* 子标签角标：值是侧栏角标的选择器，setSideDot 更新侧栏时顺带同步这里。 */
 const TAB_DOTS = { sentinel: "#sideSentinelDot", credits: "#sideExpiringDot" };

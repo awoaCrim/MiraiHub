@@ -34,14 +34,14 @@
   <link rel="stylesheet" href="/static/vendor/fontawesome/css/all.min.css" />
   <link rel="stylesheet" href="/admin/assets/growth_center.css?v=20261026-no-hover-border-1" />
   <link rel="stylesheet" href="/admin/assets/ui-enhancements.css?v=20261026-instant-mask-1" />
-  <link rel="stylesheet" href="/admin/assets/css/shell.css?v=20261031-layout-1" />
+  <link rel="stylesheet" href="/admin/assets/css/shell.css?v=20261101-layout-2" />
   <link rel="stylesheet" href="/admin/assets/console.css?v=20261101-v101" />
 <link rel="stylesheet" href="/admin/assets/traffic.css?v=20261031-r2">
   <link rel="stylesheet" href="/admin/assets/model-vendor.css?v=20261026-no-hover-border-1" />
   <link rel="stylesheet" href="/admin/assets/agent.css?v=20261027-agent-1" />
   <link rel="icon" href="/api/app/icon" type="image/svg+xml" />
   <link rel="stylesheet" href="/admin/assets/desktop.css?v=20261026-no-hover-border-1" />
-  <link rel="stylesheet" href="/admin/assets/css/layout.css?v=20261031-layout-1" />
+  <link rel="stylesheet" href="/admin/assets/css/layout.css?v=20261101-layout-2" />
   <script>if(new URLSearchParams(location.search).get('desktop')==='1') document.documentElement.classList.add('desktop-mode');</script>
 </head>
 <body>
@@ -146,7 +146,7 @@
          每张卡右上角「查看 →」进入对应详情页；统计区间对整页生效，所以放在页头。 -->
     <section id="panel-overview" class="hidden">
       <header class="page-intro">
-        <div><p>当前平台的剩余额度、用量与账号健康；底部可直接切换平台查看。</p></div>
+        <div><p>当前平台的剩余额度、用量与账号健康；点「平台状态」里的卡片可切换平台。<span id="ovUpdated"></span></p></div>
         <div>
           <div class="ov-seg" role="group" aria-label="统计区间"> <button type="button" data-ov-days="1">今日</button> <button type="button" data-ov-days="7" class="active">7 天</button> <button type="button" data-ov-days="30">30 天</button> </div>
           <button type="button" class="console-btn quiet" onclick="loadOverview(true)">
@@ -156,6 +156,7 @@
       </header>
 
       <!-- 运行状态条：服务是否在跑、当前统计的平台、更新时间 -->
+      <!-- 只在加载中 / 加载失败时出现；正常时「更新于」并入页头，运行状态看顶栏 -->
       <div id="ovStatus" class="ov-status"></div>
 
       <!-- 告警横幅：有封控信号才出现 -->
@@ -572,8 +573,32 @@
 
     <!-- Key 面板 -->
     <section id="panel-keys" class="hidden">
+      <!-- Key 列表是这一页的主体，放最上面；对接信息是「发给使用者」时才看的参考，放在列表下方 -->
+      <header class="page-intro">
+        <div><p>对外共享的 API Key：限额、并发、来源 IP 与可用分组。把 Key 连同下方「对外对接信息」里的地址一起发给使用者。</p></div>
+        <div class="page-intro-actions">
+          <button onclick="activateTab('credits')" class="console-btn quiet" data-tooltip="账号调度策略"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/><path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22"/><path d="M2 6h1.972a4 4 0 0 1 3.6 2.2"/><path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45"/></svg></span><span id="keySelectionPolicy">账号调度策略</span></button>
+          <button onclick="loadKeys()" class="console-btn quiet" data-tooltip="刷新 Key 和 IP 统计"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span>刷新</button>
+          <button onclick="openAddKey()" class="text-sm px-3 py-1.5 rounded-lg btn-primary"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span> 创建 Key</button>
+        </div>
+      </header>
+      <div class="flex gap-2 mb-3">
+        <input id="keySearch" oninput="renderKeyPage(1)" placeholder="搜索名称" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      </div>
+      <div class="card overflow-auto max-h-[70vh]" style="position:relative">
+        <table class="tbl min-w">
+          <thead class="bg-slate-50 text-slate-500 text-left sticky top-0">
+            <tr>
+              <th class="px-4 py-3">名称</th><th class="px-4 py-3">Key</th><th class="px-4 py-3 text-right">限额</th>
+              <th class="px-4 py-3 text-right">已用</th><th class="px-4 py-3 text-right">并发</th><th class="px-4 py-3">来源 IP</th><th class="px-4 py-3">分组</th><th class="px-4 py-3">状态</th><th class="px-4 py-3 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody id="keyBody"></tbody>
+        </table>
+      </div>
+      <div id="keyPager" class="flex justify-between items-center mt-3 text-sm text-slate-500"></div>
       <!-- 对外对接信息：把系统接口 / 模型列表 / baseurl 放出来，方便把 Key 共享给他人 -->
-      <div class="card p-4 mb-3 api-share-card">
+      <div class="card p-4 mt-5 api-share-card">
         <div class="flex items-center justify-between mb-2">
           <h3 class="text-sm font-semibold text-wb"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22v-5"/><path d="M15 8V2"/><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"/><path d="M9 8V2"/></svg></span> 对外对接信息（共享用）</h3>
           <button onclick="loadShareInfo()" class="text-xs text-slate-400 hover-brand"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span>刷新</button>
@@ -635,29 +660,6 @@
           </details>
         </div>
       </div>
-      <div class="flex flex-wrap justify-between items-center mb-3 gap-2 panel-toolbar">
-        <h2 class="font-semibold">API Keys（对外共享）</h2>
-        <div class="tools flex flex-wrap gap-2">
-          <button onclick="activateTab('credits')" class="console-btn quiet" data-tooltip="账号调度策略"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/><path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22"/><path d="M2 6h1.972a4 4 0 0 1 3.6 2.2"/><path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45"/></svg></span><span id="keySelectionPolicy">账号调度策略</span></button>
-          <button onclick="loadKeys()" class="console-btn quiet" data-tooltip="刷新 Key 和 IP 统计"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span>刷新</button>
-          <button onclick="openAddKey()" class="text-sm px-3 py-1.5 rounded-lg btn-primary"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span> 创建 Key</button>
-        </div>
-      </div>
-      <div class="flex gap-2 mb-3">
-        <input id="keySearch" oninput="renderKeyPage(1)" placeholder="搜索名称" class="w-full border rounded-lg px-3 py-2 text-sm" />
-      </div>
-      <div class="card overflow-auto max-h-[70vh]" style="position:relative">
-        <table class="tbl min-w">
-          <thead class="bg-slate-50 text-slate-500 text-left sticky top-0">
-            <tr>
-              <th class="px-4 py-3">名称</th><th class="px-4 py-3">Key</th><th class="px-4 py-3 text-right">限额</th>
-              <th class="px-4 py-3 text-right">已用</th><th class="px-4 py-3 text-right">并发</th><th class="px-4 py-3">来源 IP</th><th class="px-4 py-3">分组</th><th class="px-4 py-3">状态</th><th class="px-4 py-3 text-right">操作</th>
-            </tr>
-          </thead>
-          <tbody id="keyBody"></tbody>
-        </table>
-      </div>
-      <div id="keyPager" class="flex justify-between items-center mt-3 text-sm text-slate-500"></div>
     </section>
 
     <section id="panel-ip" class="hidden">
@@ -1159,8 +1161,10 @@
 
     <!-- 同步设置面板 -->
     <section id="panel-sync" class="hidden">
+      <header class="page-intro">
+        <div><p>本地数据视为最新。配置线上实例的 URL 与密钥（HMAC 签名），点击「同步到线上」把本地账号、模型配置<b>与客户端兼容参数（UA / 版本号 / 请求头）</b>推送过去。线上实例需配置相同密钥并通过 <code class="text-[11px]">/api/sync/receive</code> 接收。版本与产品字段从本机安装包读取，OS 与硬件字段按本机系统实测（仅在装了客户端的机器上有效）；线上服务器探测不到客户端，一律以同步过来的档案为准。</p></div>
+      </header>
       <div class="card p-5 max-w-2xl">
-        <p class="text-xs text-slate-400 mb-4">本地数据视为最新。配置线上实例的 URL 与密钥（HMAC 签名），点击「同步到线上」把本地账号、模型配置<b>与客户端兼容参数（UA / 版本号 / 请求头）</b>推送过去。线上实例需配置相同密钥并通过 <code class="text-[11px]">/api/sync/receive</code> 接收。版本与产品字段从本机安装包读取，OS 与硬件字段按本机系统实测（仅在装了客户端的机器上有效）；线上服务器探测不到客户端，一律以同步过来的档案为准。</p>
         <label class="block text-sm mb-1">远程 URL</label>
         <input id="syncUrl" class="w-full border rounded-lg px-3 py-2 mb-3 text-sm" placeholder="https://online.example.com" />
         <label class="block text-sm mb-1">同步密钥（HMAC 签名用）</label>
@@ -1385,6 +1389,9 @@
 
     <!-- 设置面板 -->
     <section id="panel-settings" class="hidden">
+      <header class="page-intro">
+        <div><p>服务运行参数、WorkBuddy 邀请绑定与后台登录密码。运行参数即常用的 .env 项（exe / apk 部署没有配置文件，在这里改），保存即生效，标「重启」的项重启后套用。</p></div>
+      </header>
       <div class="settings-section runtime-config-block">
         <h3>运行配置<span class="runtime-config-sub">常用 .env 项动态改（exe / apk 部署没有配置文件，改这里即时生效；标「重启」的项重启后套用）</span></h3>
         <div id="runtimeConfigHost"><p class="fs-12" style="color:var(--fg-subtle)">加载中…</p></div>
@@ -1519,26 +1526,26 @@
 <script src="/admin/assets/model-icons.js?v=20261028-r9"></script>
 <script src="/admin/assets/model-metadata.js?v=20261023-image-types-2"></script>
 <script src="/admin/assets/usage-ip.js?v=20261031-r2"></script>
-<script src="/admin/assets/js/console/00-core.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/05-nav.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/10-overview.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/20-sentinel-gateway.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/30-context-nav.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/40-components.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/50-accounts.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/55-tasks-growth.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/60-credits.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/70-keys-models.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/80-settings.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/85-logs-usage.js?v=20261031-layout-1"></script>
-<script src="/admin/assets/js/console/90-ui-helpers.js?v=20261031-layout-1"></script>
+<script src="/admin/assets/js/console/00-core.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/05-nav.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/10-overview.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/20-sentinel-gateway.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/30-context-nav.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/40-components.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/50-accounts.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/55-tasks-growth.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/60-credits.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/70-keys-models.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/80-settings.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/85-logs-usage.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/90-ui-helpers.js?v=20261101-layout-2"></script>
 <script src="/admin/assets/growth_center.js?v=20261031-r2"></script>
 <script src="/admin/assets/date-time-picker.js?v=20261031-r2"></script>
 <script src="/admin/assets/review-improvements.js?v=20261031-r2"></script>
 <script src="/static/vendor/marked-12.0.2.min.js"></script>
 <script src="/static/vendor/dompurify-3.4.17.min.js"></script>
 <script src="/admin/assets/release-notes.js?v=20261031-r2"></script>
-<script src="/admin/assets/desktop.js?v=20261031-layout-1"></script>
+<script src="/admin/assets/desktop.js?v=20261101-layout-2"></script>
 <script src="/admin/assets/profile-transfer.js?v=20261031-r2"></script>
 <script src="/admin/assets/ip-management.js?v=20261031-r2"></script>
 <script src="/admin/assets/key-ip.js?v=20261031-r2"></script>
@@ -1547,8 +1554,8 @@
      必须在 platform-switch.js **之前**加载 —— 后者要用 actionsFor()。 -->
 <script src="/admin/assets/traffic.js?v=20261029-r2"></script>
 <script src="/admin/assets/platform-actions.js?v=20261028-r10"></script>
-<script src="/admin/assets/platform-switch.js?v=20261031-layout-1"></script>
+<script src="/admin/assets/platform-switch.js?v=20261101-layout-2"></script>
 <script src="/admin/assets/agent.js?v=20261031-r2"></script>
-<script src="/admin/assets/js/console/99-boot.js?v=20261031-layout-1"></script>
+<script src="/admin/assets/js/console/99-boot.js?v=20261101-layout-2"></script>
 </body>
 </html>

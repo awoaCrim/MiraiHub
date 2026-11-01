@@ -164,7 +164,7 @@ async function loadOverview(force) {
     renderOverview(data, platforms, sentinel);
   } catch (e) {
     const host = $("#ovStatus");
-    if (host) host.innerHTML = `<span style="color:var(--danger)">概览加载失败：${esc(e.message)}</span>`;
+    if (host) { host.hidden = false; host.innerHTML = `<span style="color:var(--danger)">概览加载失败：${esc(e.message)}</span>`; }
   } finally {
     _ovSetLoading(false);
   }
@@ -177,6 +177,7 @@ function _ovSetLoading(on) {
     bar.classList.toggle("ov-loading", !!on);
     // 只在还没有真实内容时插入占位文案，避免覆盖已有数据
     if (on && !bar.dataset.filled) {
+      bar.hidden = false;
       bar.innerHTML = `<div class="ov-status-left">
         <span class="ov-loading-dot"></span>
         <span class="ov-muted">正在加载概览…</span>
@@ -205,17 +206,13 @@ function renderOverview(data, platforms, sentinel) {
   const cache = data.cache || {};
   const monitor = data.monitor || {};
 
-  // ---- 运行状态条（API 地址只在顶栏「复制 API 地址」常驻，这里不再重复） ----
-  const platformLabel = data.platform_label || "全部平台";
-  $("#ovStatus").innerHTML = `
-    <div class="ov-status-left">
-      <span class="ov-badge-ok"><span class="ov-dot-pulse"></span> 服务运行中</span>
-      <span class="ov-muted">当前统计：${esc(platformLabel)}</span>
-      <span class="ov-muted">${esc((platforms && platforms.items || []).length)} 个平台</span>
-    </div>
-    <div class="ov-status-right">
-      <span class="ov-muted">更新于 ${fmtTime(new Date().toISOString().slice(0,19), false)}</span>
-    </div>`;
+  // ---- 状态条只用于加载中 / 失败；成功后隐藏。「服务运行中」与顶栏重复，
+  //      当前平台看顶栏切换器，平台数看「平台状态」卡片，这里只留更新时间 ----
+  const statusBar = $("#ovStatus");
+  statusBar.hidden = true;
+  statusBar.innerHTML = "";
+  const updated = $("#ovUpdated");
+  if (updated) updated.textContent = ` 更新于 ${fmtTime(new Date().toISOString().slice(0,19), false)}`;
 
   // ---- 告警横幅：有封控信号才出现 ----
   const alertHost = $("#ovAlert");
