@@ -33,7 +33,9 @@ function statCard(label, value, opts) {
  *       抹成整数会让「这个包还剩多少」失真，对账时对不上。
  */
 function fmtCredit(n) {
-  return String(Math.round(Number(n) || 0));
+  // 千分位与概览 / 平台页（toLocaleString）一致：17484 → 17,484。
+  // 51 处调用都只用于展示，没有回填输入框或再解析成数字。
+  return Math.round(Number(n) || 0).toLocaleString("zh-CN");
 }
 
 /** 单个积分包的精确保留（最多两位小数，整数不补 .00）。 */
@@ -186,7 +188,9 @@ function accExpiryCell(a) {
 
 function consoleIcon(name) {
   const paths = {"fa-user-group": "<circle cx=\"9\" cy=\"7\" r=\"3\"/><path d=\"M3 21v-3a6 6 0 0 1 12 0v3m2-17a3 3 0 0 1 0 6m2 4a5 5 0 0 1 2 4v3\"/>", "fa-hourglass-half": "<path d=\"M6 2h12M6 22h12M7 2v5l10 10v5M17 2v5L7 17v5\"/>", "fa-chart-pie": "<path d=\"M21 12a9 9 0 1 1-9-9v9Zm-5-9a9 9 0 0 1 5 5h-5Z\"/>", "fa-key": "<circle cx=\"8\" cy=\"8\" r=\"5\"/><path d=\"m12 12 9 9m-5-5 3-3m-1 5 3-3\"/>", "fa-cubes": "<path d=\"m12 3 8 4v10l-8 4-8-4V7Zm-8 4 8 4 8-4M12 11v10\"/>", "fa-layer-group": "<path d=\"m12 3 10 5-10 5L2 8Zm-9 10 9 5 9-5M3 18l9 5 9-5\"/>", "fa-clock-rotate-left": "<path d=\"M3 4v5h5m-5 0a9 9 0 1 1 0 7M12 7v5l3 2\"/>", "fa-list": "<path d=\"M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01\"/>", "fa-fingerprint": "<path d=\"M4 12a8 8 0 0 1 16 0m-13 5v-5a5 5 0 0 1 10 0v3m-7 5v-8a2 2 0 0 1 4 0v5m-1 5a12 12 0 0 0 4-4M3 16v-1\"/>", "fa-cloud-arrow-up": "<path d=\"M6 18a5 5 0 1 1 1-10 6 6 0 0 1 11 1 4 4 0 0 1 0 8m-6 4V11m-4 4 4-4 4 4\"/>", "fa-gear": "<path d=\"m10 3-1 3-3 1-2 3 2 2v3l2 2 3-1 2 2 3-1 1-3 3-1 1-3-3-2V7l-3-2-2 1Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>", "fa-seedling": "<path d=\"M12 21v-9M12 16C5 16 3 11 3 7c6 0 9 3 9 9Zm0-4c0-6 3-9 9-9 0 6-3 9-9 9Z\"/>", "fa-cat": "<path d=\"m5 9-1-6 6 3h4l6-3-1 6a8 8 0 1 1-14 0Zm4 4h.01M15 13h.01m-4 4h2\"/>", "fa-list-ul": "<path d=\"M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01\"/>", "fa-chart-line": "<path d=\"M3 3v18h18M6 15l4-5 4 3 6-7\"/>", "fa-right-to-bracket": "<path d=\"M14 3h6v18h-6M3 12h12m-4-4 4 4-4 4\"/>", "fa-rotate": "<path d=\"M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 3M4 15l2 3a7 7 0 0 0 12-1\"/>", "fa-file-export": "<path d=\"M12 3H4v18h12v-5M9 10h12m-4-4 4 4-4 4\"/>", "fa-power-off": "<path d=\"M12 2v10M6 5a9 9 0 1 0 12 0\"/>", "fa-trash": "<path d=\"M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7\"/>"};
-  const extraPaths = {"fa-heart-pulse": "<path d=\"M3 12h4l2-6 4 12 2-6h6\"/>"};
+  const extraPaths = {"fa-heart-pulse": "<path d=\"M3 12h4l2-6 4 12 2-6h6\"/>",
+    "fa-sliders": "<path d=\"M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0\"/><circle cx=\"16\" cy=\"6\" r=\"2\"/><circle cx=\"10\" cy=\"12\" r=\"2\"/><circle cx=\"18\" cy=\"18\" r=\"2\"/>",
+    "fa-ellipsis": "<circle cx=\"5\" cy=\"12\" r=\"1\"/><circle cx=\"12\" cy=\"12\" r=\"1\"/><circle cx=\"19\" cy=\"12\" r=\"1\"/>"};
   const path = paths[name] || extraPaths[name];
   return path ? `<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">${path}</svg>` : '';
 }
@@ -432,9 +436,16 @@ function scheduleActionTooltipHide() {
     hideActionTooltip();
   }, 300);
 }
+/* 下拉框不弹悬停提示：提示正好落在下拉面板的位置，挡住选项。
+ * 下拉框按钮本身、下拉面板内部、以及任一下拉展开期间都跳过。 */
+function _tooltipBlockedByDropdown(target) {
+  return !!(target.closest('.ui-select, select, details > summary')
+    || document.querySelector('.ui-select.open, details[open] > .ui-select-panel'));
+}
 document.addEventListener('pointerover', e => {
   if (e.pointerType === 'touch') return;
   const target = e.target.closest('[data-tooltip]');
+  if (target && _tooltipBlockedByDropdown(target)) return;
   if (target && !target.contains(e.relatedTarget)) showActionTooltip(target);
 });
 document.addEventListener('pointerout', e => {
@@ -442,6 +453,7 @@ document.addEventListener('pointerout', e => {
 });
 document.addEventListener('focusin', e => {
   const target = e.target.closest('[data-tooltip]');
+  if (target && _tooltipBlockedByDropdown(target)) return;
   if (target) showActionTooltip(target, true);
 });
 document.addEventListener('focusout', e => {
@@ -513,20 +525,35 @@ async function clearAccountCooldown(accountId) {
 
 function accRow(a) {
   // 图标操作按钮抽成数组：顺序/配色一处可调，比 9 个 button 平铺更好维护
+  // 行内只放 3 个最常用的图标；其余收进「更多」菜单并写明文字 —— 原来 12 个
+  // 图标平铺，不悬停根本分不清哪个是「注入本机」哪个是「导出登录态」。
+  // 第 4 项是菜单里的短标签；tooltip / 说明仍用第 3 项全称查 accountActionDescription。
   const ops = [
-    [`WBReview.accountLimit(${a.id})`, "fa-sliders", "text-indigo-600", "账号并发上限"],
-    [`openReauthAccount(${a.id})`, "fa-key", "text-emerald-600", "重新登录"],
-    [`growthTasks(${a.id},'${esc(a.name||'')}')`, "fa-seedling", "text-emerald-600", "成长任务"],
-    [`catTravel(${a.id})`, "fa-cat", "text-pink-600", "猫猫旅行"],
-    [`viewCreditDetails(${a.id},'${esc(a.name||'')}')`, "fa-list-ul", "text-amber-600", "积分明细（逐包到期日）"],
-    [`viewRequestUsage(${a.id},'${esc(a.name||'')}')`, "fa-chart-line", "text-blue-600", "请求用量"],
-    [`healthCheckAcc(${a.id})`, "fa-heart-pulse", "text-emerald-600", "三项健康检查：积分、模型列表、真实对话"],
-    [`injectAcc(${a.id})`, "fa-right-to-bracket", "text-violet-600", "注入本机客户端"],
     [`refreshAcc(${a.id})`, "fa-rotate", "text-indigo-600", "刷新余额与到期快照"],
-    [`exportAcc(${a.id},'${esc(a.name||'')}')`, "fa-file-export", "text-sky-600", "导出登录态"],
-    [`toggleAcc(${a.id},'${a.status==='active'?'disabled':'active'}')`, "fa-power-off", "text-slate-500", "启用/禁用"],
-    [`delAcc(${a.id})`, "fa-trash", "text-red-500", "删除"],
+    [`viewRequestUsage(${a.id},'${esc(a.name||'')}')`, "fa-chart-line", "text-blue-600", "请求用量"],
+    [`viewCreditDetails(${a.id},'${esc(a.name||'')}')`, "fa-list-ul", "text-amber-600", "积分明细（逐包到期日）"],
   ];
+  const active = a.status === 'active';
+  const menu = [
+    ["账号"],
+    [`openReauthAccount(${a.id})`, "fa-key", "text-emerald-600", "重新登录", "重新登录"],
+    [`WBReview.accountLimit(${a.id})`, "fa-sliders", "text-indigo-600", "账号并发上限", "并发上限"],
+    [`healthCheckAcc(${a.id})`, "fa-heart-pulse", "text-emerald-600", "三项健康检查：积分、模型列表、真实对话", "健康检查"],
+    [`injectAcc(${a.id})`, "fa-right-to-bracket", "text-violet-600", "注入本机客户端", "注入本机客户端"],
+    [`exportAcc(${a.id},'${esc(a.name||'')}')`, "fa-file-export", "text-sky-600", "导出登录态", "导出登录态"],
+    ["成长"],
+    [`growthTasks(${a.id},'${esc(a.name||'')}')`, "fa-seedling", "text-emerald-600", "成长任务", "成长任务"],
+    [`catTravel(${a.id})`, "fa-cat", "text-pink-600", "猫猫旅行", "猫猫旅行"],
+    [],
+    [`toggleAcc(${a.id},'${active?'disabled':'active'}')`, "fa-power-off", "text-slate-500", "启用/禁用", active ? "禁用账号" : "启用账号"],
+    [`delAcc(${a.id})`, "fa-trash", "text-red-500", "删除", "删除账号"],
+  ];
+  const menuHtml = menu.map(item => {
+    if (!item.length) return '<div class="action-menu-sep" role="separator"></div>';
+    if (item.length === 1) return `<div class="action-menu-label">${item[0]}</div>`;
+    const [fn, icon, col, ttl, label] = item;
+    return `<button type="button" role="menuitem" class="${ttl === "删除" ? "is-danger" : ""}" title="${esc(accountActionDescription(ttl))}" onclick="this.closest('details').open=false; ${fn}"><span class="${col}">${consoleIcon(icon)}</span>${label}</button>`;
+  }).join("");
   // data-label 是给**窄屏卡片形态**用的字段名（见 CSS 里的移动端段落）：
   // 窄屏下表格变成卡片，靠 `td::before { content: attr(data-label) }`
   // 在每行左边补出「总积分 / 剩余 / 积分到期」这些标签，
@@ -546,11 +573,11 @@ function accRow(a) {
       ${accountLimitBadge(a)}
     </td>
     <td class="col-status" data-label="状态">${badge(a.status)}</td>
-    <td class="tnum text-right" data-label="总积分" style="color:var(--fg-muted)">${a.balance_total}</td>
-    <td class="tnum text-right font-medium" data-label="剩余" style="color:${a.balance_remain>0?'var(--ok,#33587F)':'var(--danger)'}">${a.balance_remain}</td>
+    <td class="tnum text-right" data-label="总积分" style="color:var(--fg-muted)">${fmtCredit(a.balance_total)}</td>
+    <td class="tnum text-right font-medium" data-label="剩余" style="color:${a.balance_remain>0?'var(--ok,#33587F)':'var(--danger)'}">${fmtCredit(a.balance_remain)}</td>
     <td data-label="积分到期">${accExpiryCell(a)}${a.credits_collection ? `<small class="billing-state" data-tooltip="账单采集状态" data-tooltip-description="${esc((a.credits_collection.compatibility_fallback ? '兼容接口快照' : a.credits_collection.snapshot_preserved ? '保留上次完整快照' : '三路完整快照') + ' · ' + (a.credits_collection.failed_sources || []).join(' / ') + (a.credits_collection.remaining_difference == null ? '' : ' · 对账差值 ' + a.credits_collection.remaining_difference))}">${a.credits_collection.snapshot_preserved ? '采集不完整' : a.credits_collection.compatibility_fallback ? '兼容快照' : a.credits_collection.remaining_difference ? '账单有差异' : '三路已核对'}</small>` : ''}</td>
     <td class="c-ops" data-label="操作">${ops.map(([fn, ic, col, ttl]) =>
-      `<button onclick="${fn}" class="${col}" data-tooltip="${ttl}" data-tooltip-description="${esc(accountActionDescription(ttl))}" aria-label="${ttl}">${consoleIcon(ic)}</button>`).join("")}</td>
+      `<button onclick="${fn}" class="${col}" data-tooltip="${ttl}" data-tooltip-description="${esc(accountActionDescription(ttl))}" aria-label="${ttl}">${consoleIcon(ic)}</button>`).join("")}<details class="action-menu acc-row-menu" data-no-anim><summary aria-label="更多操作" role="button">${consoleIcon("fa-ellipsis")}</summary><div class="action-menu-panel" role="menu">${menuHtml}</div></details></td>
   </tr>`;
 }
 
@@ -644,3 +671,28 @@ async function loadAccounts() {
   const dot = $("#sideExpiringDot");
   if (dot) dot.title = expiringN > 0 ? `${expiringN} 个账号有 7 天内到期的积分` : "";
 }
+
+/* ---------- 账号行「更多」菜单 ----------
+ * 账号表外层是 overflow:auto 的滚动框，菜单用绝对定位会被裁掉，所以展开时
+ * 改成 fixed 并按按钮位置落位（下方放不下就向上弹）。同时只开一个；
+ * 滚动 / 点外面 / Esc 收起。toggle 事件不冒泡，用捕获阶段监听。 */
+document.addEventListener("toggle", e => {
+  const menu = e.target;
+  if (!(menu instanceof HTMLDetailsElement) || !menu.classList.contains("acc-row-menu") || !menu.open) return;
+  document.querySelectorAll(".acc-row-menu[open]").forEach(m => { if (m !== menu) m.open = false; });
+  if (typeof hideActionTooltip === "function") hideActionTooltip();
+  const panel = menu.querySelector(".action-menu-panel");
+  const rect = menu.querySelector("summary").getBoundingClientRect();
+  panel.style.position = "fixed";
+  panel.style.right = Math.max(8, window.innerWidth - rect.right) + "px";
+  panel.style.top = (rect.bottom + 6) + "px";
+  const h = panel.offsetHeight;
+  if (rect.bottom + 6 + h > window.innerHeight - 8) panel.style.top = Math.max(8, rect.top - 6 - h) + "px";
+}, true);
+const _closeAccRowMenus = () => document.querySelectorAll(".acc-row-menu[open]").forEach(m => { m.open = false; });
+document.addEventListener("scroll", e => {
+  if (!(e.target instanceof Element && e.target.closest(".acc-row-menu"))) _closeAccRowMenus();
+}, true);
+document.addEventListener("click", e => { if (!e.target.closest(".acc-row-menu")) _closeAccRowMenus(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") _closeAccRowMenus(); });
+window.addEventListener("resize", _closeAccRowMenus);

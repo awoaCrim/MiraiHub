@@ -1405,7 +1405,7 @@ async function loadGatewaySpeed() {
       <span class="gw-speed-sub">${fmtNum(r.requests)}</span>
     </div>`;
   }).join("") + `<p class="bench-note">
-    表中均为**平均值**（悬停看中位数）。TTFT 越低越好、TPS 越高越好。
+    表中均为<b>平均值</b>（悬停看中位数）。TTFT 越低越好、TPS 越高越好。
     想固定用某个平台：复制带 <code>-平台名</code> 后缀的模型 id 即可
     （如 <code>DeepSeek-V4.1-Flash-loomy</code>），网关会直接路由到该平台。
   </p>`;

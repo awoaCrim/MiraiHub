@@ -325,6 +325,15 @@ async function loadPlatformOverview() {
   const titleLabel = spec.label || platformId || "";
   const showRealm = realmLabel && !titleLabel.includes(realmLabel);
 
+  // 「扫描本机 / 导入 / 刷新额度」这些按钮作用于当前平台，挂在平台标题右侧；
+  // 重绘前先把它们挪出 host，免得 innerHTML 把节点连同事件委托目标一起销毁。
+  const actions = $("#platformActions");
+  if (actions && host.contains(actions)) host.parentNode.insertBefore(actions, host);
+  const dockActions = () => {
+    const head = host.querySelector(".platform-overview-head");
+    if (head && actions) head.appendChild(actions);
+  };
+
   try {
     const r = await api("/api/platforms/" + encodeURIComponent(platformId) + "/overview");
     if (!r.ok) {
@@ -336,12 +345,15 @@ async function loadPlatformOverview() {
 
     host.innerHTML = `
       <div class="platform-overview-head">
-        <h2>${esc(titleLabel)}${showRealm ? " · " + esc(realmLabel) : ""}</h2>
-        <p>${esc(spec.notes || "")}</p>
+        <div>
+          <h2>${esc(titleLabel)}${showRealm ? " · " + esc(realmLabel) : ""}</h2>
+          <p>${esc(spec.notes || "")}</p>
+        </div>
       </div>
       ${cards.length
         ? `<div class="stat-grid">${cards.map(renderPlatformCard).join("")}</div>`
         : `<p class="ov-note">${esc(data.reason || "该平台暂未提供概览")}</p>`}`;
+    dockActions();
 
     // 数值动画：只对「看起来是数字」的卡片做滚动，
     // 避免给「内置默认」「反向代理」这种文案做无意义的计数动画。

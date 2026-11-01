@@ -34,14 +34,14 @@
   <link rel="stylesheet" href="/static/vendor/fontawesome/css/all.min.css" />
   <link rel="stylesheet" href="/admin/assets/growth_center.css?v=20261026-no-hover-border-1" />
   <link rel="stylesheet" href="/admin/assets/ui-enhancements.css?v=20261026-instant-mask-1" />
-  <link rel="stylesheet" href="/admin/assets/css/shell.css?v=20261101-layout-2" />
+  <link rel="stylesheet" href="/admin/assets/css/shell.css?v=20261101-layout-3" />
   <link rel="stylesheet" href="/admin/assets/console.css?v=20261101-v101" />
 <link rel="stylesheet" href="/admin/assets/traffic.css?v=20261031-r2">
   <link rel="stylesheet" href="/admin/assets/model-vendor.css?v=20261026-no-hover-border-1" />
   <link rel="stylesheet" href="/admin/assets/agent.css?v=20261027-agent-1" />
   <link rel="icon" href="/api/app/icon" type="image/svg+xml" />
   <link rel="stylesheet" href="/admin/assets/desktop.css?v=20261026-no-hover-border-1" />
-  <link rel="stylesheet" href="/admin/assets/css/layout.css?v=20261101-layout-2" />
+  <link rel="stylesheet" href="/admin/assets/css/layout.css?v=20261101-layout-3" />
   <script>if(new URLSearchParams(location.search).get('desktop')==='1') document.documentElement.classList.add('desktop-mode');</script>
 </head>
 <body>
@@ -354,44 +354,14 @@
         <div id="gwStrategies" class="gw-strategy-grid"></div>
       </div>
 
-      <!-- 调度可视化：Key -> 网关 -> 各平台，粒子展示实际选中。
-           与「当前调度顺序」左右分栏 —— 动画不再独占整行，下方内容一屏可见。 -->
-      <div class="live-split">
-        <div class="card gw-card">
-          <div class="sentinel-card-head">
-            <h3>调度可视化</h3>
-            <span>按当前策略实际排出的顺序 · 点策略可看流向</span>
-          </div>
-          <div style="padding:0 16px 16px">
-            <div id="gwTraffic"></div>
-            <div class="flex flex-wrap items-center gap-2 mt-3">
-              <button onclick="gwTrafficBurst()" class="console-btn primary">
-                模拟一批请求
-              </button>
-              <span class="text-xs" style="color:var(--fg-subtle)">
-                粒子飞向的就是真实调度会选中的平台
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="card gw-card">
-          <div class="sentinel-card-head">
-            <h3>当前调度顺序</h3>
-            <span>按当前策略实际排出的顺序，含原因</span>
-          </div>
-          <div id="gwOrder" class="gw-order-list" style="padding:0 14px 14px"></div>
-        </div>
-      </div>
-
-      <!-- 平台速度：TTFT（多久开始出字）+ TPS（出字多快）
-           放在网关页是因为这两个数字直接决定「该不该调这个平台的优先级」。 -->
-      <div class="card gw-card mt-3">
+      <!-- 平台优先级与禁用：紧跟策略选择 —— 选了「优先级」策略马上就能排顺序，
+           不用滚过可视化和测速去页面最底部找 -->
+      <div class="card gw-card">
         <div class="sentinel-card-head">
-          <h3>平台速度 · TTFT / TPS</h3>
-          <span id="gwSpeedHint">近 24 小时真实请求聚合</span>
+          <h3>平台优先级</h3>
+          <span>数字越小越优先（仅「优先级」策略生效）</span>
         </div>
-        <div id="gwSpeedTable" class="gw-speed"></div>
+        <div id="gwPlatforms" class="gw-platform-list"></div>
       </div>
 
       <!-- 无头请求的路由归属（默认走默认平台） -->
@@ -434,13 +404,44 @@
         </div>
       </div>
 
-      <!-- 平台优先级与禁用 -->
-      <div class="card gw-card">
-        <div class="sentinel-card-head">
-          <h3>平台优先级</h3>
-          <span>数字越小越优先（仅「优先级」策略生效）</span>
+      <!-- 调度可视化：Key -> 网关 -> 各平台，粒子展示实际选中。
+           与「当前调度顺序」左右分栏 —— 动画不再独占整行，下方内容一屏可见。 -->
+      <div class="live-split">
+        <div class="card gw-card">
+          <div class="sentinel-card-head">
+            <h3>调度可视化</h3>
+            <span>按当前策略实际排出的顺序 · 点策略可看流向</span>
+          </div>
+          <div style="padding:0 16px 16px">
+            <div id="gwTraffic"></div>
+            <div class="flex flex-wrap items-center gap-2 mt-3">
+              <button onclick="gwTrafficBurst()" class="console-btn primary">
+                模拟一批请求
+              </button>
+              <span class="text-xs" style="color:var(--fg-subtle)">
+                粒子飞向的就是真实调度会选中的平台
+              </span>
+            </div>
+          </div>
         </div>
-        <div id="gwPlatforms" class="gw-platform-list"></div>
+
+        <div class="card gw-card">
+          <div class="sentinel-card-head">
+            <h3>当前调度顺序</h3>
+            <span>按当前策略实际排出的顺序，含原因</span>
+          </div>
+          <div id="gwOrder" class="gw-order-list" style="padding:0 14px 14px"></div>
+        </div>
+      </div>
+
+      <!-- 平台速度：TTFT（多久开始出字）+ TPS（出字多快）
+           放在网关页是因为这两个数字直接决定「该不该调这个平台的优先级」。 -->
+      <div class="card gw-card mt-3">
+        <div class="sentinel-card-head">
+          <h3>平台速度 · TTFT / TPS</h3>
+          <span id="gwSpeedHint">近 24 小时真实请求聚合</span>
+        </div>
+        <div id="gwSpeedTable" class="gw-speed"></div>
       </div>
     </section>
 
@@ -683,7 +684,7 @@
         <label class="text-xs">至少请求<input id="ipUsageMin" type="number" min="0" max="1000000" value="0" class="block border rounded-lg px-3 py-2 mt-1" style="width:100px"></label>
         <label id="ipUsageMaxLabel" class="text-xs hidden"><span id="ipUsageMaxText">平均 Token ≤</span><input id="ipUsageMax" type="number" min="0" max="1000000000" value="100" step="any" class="block border rounded-lg px-3 py-2 mt-1" style="width:120px"></label>
         <label class="text-xs">IP 地址<input id="ipActivityIP" placeholder="全部 IP" maxlength="64" class="block border rounded-lg px-3 py-2 mt-1" style="width:160px"></label>
-        <button type="submit" class="console-btn quiet">筛选</button>
+        <button type="submit" class="console-btn">筛选</button>
       </form>
       <p class="text-xs text-slate-400 mb-3">入口次数包含鉴权失败、限流和封禁请求；历史数据从用量日志补充。按小时汇总，时间范围包含起始小时；失败数按 HTTP 状态统计，积分与 Token 来自用量日志。点击表头切换排序。</p>
       <p class="text-xs text-slate-400 mb-3">低消耗筛选按成功用量记录计算均值，未返回 Token 的请求不作为低消耗。点击 IP 查看用量明细。</p>
@@ -977,7 +978,7 @@
     <!-- 用量日志面板 -->
     <section id="panel-logs" class="hidden">
       <div class="page-intro">
-        <div><p>筛选条件下方是<b>请求动态</b>（实时刷新，正在发生的请求）；再往下是按账号汇总与落库记录表格，可筛选、导出。</p>
+        <div><p>按条件筛选请求记录，可导出 CSV。筛选下方是实时请求动态，表格之后是按账号汇总与请求详情抓取开关。</p>
         </div>
         <div id="logActions" class="flex flex-wrap gap-2">
           <button onclick="exportLogs()" class="console-btn" data-tooltip="导出当前筛选结果为 CSV"><span class="wb-icon"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg></span> 导出</button>
@@ -986,16 +987,6 @@
         </div>
       </div>
 
-      <!-- 按账号查询区：这是「使用记录再新增按账号查询」的入口 -->
-      <div class="card p-3 mb-4">
-        <div class="flex flex-wrap gap-3 items-center">
-          <label class="model-switch"><input id="logCaptureEnabled" type="checkbox" role="switch" disabled onchange="WBUsage.setCapture(this.checked)"><span aria-hidden="true"></span>记录请求详情（内存缓存）</label>
-          <button type="button" class="console-btn quiet" onclick="WBUsage.captureStatus()">刷新状态</button>
-          <button type="button" class="console-btn quiet" onclick="WBUsage.clearCache()">清空详情缓存</button>
-        </div>
-        <p id="logCaptureHint" class="text-xs mt-2" style="color:var(--fg-muted)">读取开关状态…</p>
-        <p class="text-xs mt-1" style="color:var(--fg-muted)">开启后记录新请求的入站正文和各次发往上游的实际正文，仅供管理员审核。凭据脱敏，正文可能含完整对话；不写数据库。关闭停止新记录，已有缓存可手动清空。</p>
-      </div>
       <div class="card p-3 mb-4">
         <div class="flex flex-wrap gap-2 items-end">
           <div class="fld-150">
@@ -1047,14 +1038,8 @@
         <div id="logFilterHint" class="text-[11px] mt-2 hidden"></div>
       </div>
 
-      <!-- 请求动态（实时区）
-           位置：**筛选条件之下、按账号汇总之上**。
-           它随请求动态刷新，是「筛选完之后正在发生什么」；
-           放在筛选条上面会把页头挤下去，看起来像独立的第二个页面头
-           （用户反馈：应该跟在筛选条件后面）。
-
-           数据源与哨兵同一个接口（/api/sentinel/status），不新增后端查询；
-           只在日志页激活时轮询，切走即停。 -->
+      <!-- 请求动态（实时区）：紧跟筛选条件（用户反馈：应该跟在筛选条件后面）。
+           数据源与哨兵同一个接口（/api/sentinel/status），只在日志页激活时轮询，切走即停。 -->
       <div class="card mb-4" id="logLiveCard">
         <div class="sentinel-card-head">
           <h3>请求动态</h3>
@@ -1064,16 +1049,8 @@
         <div id="logLiveRecent" class="live-request-list"></div>
       </div>
 
-      <!-- 按账号汇总：回答「这个号到底用了多少」，不必翻几十页日志去数 -->
-      <div class="card p-4 mb-4">
-        <div class="section-head">
-          <h3><button id="logSummaryToggle" type="button" aria-expanded="true" aria-controls="logSummary" onclick="toggleLogCard('summary')">按账号汇总 <span data-fold-label>收起 ▴</span></button></h3>
-          <span class="hint" id="logSummaryHint"></span>
-        </div>
-        <div id="logSummary" class="overflow-x-auto"></div>
-      </div>
-
-      <div class="card overflow-hidden">
+      <!-- 日志表格是这一页的主体：放在按账号汇总（十几行高）之前，进页面就能看到记录 -->
+      <div class="card overflow-hidden mb-4">
         <div class="overflow-x-auto log-table-wrap max-h-[60vh]">
           <table class="tbl log-table">
             <colgroup><col class="log-col-time"><col class="log-col-ip"><col class="log-col-key"><col class="log-col-platform"><col class="log-col-account"><col class="log-col-model"><col class="log-col-token"><col class="log-col-hit"><col class="log-col-credit"><col class="log-col-latency"><col class="log-col-purpose"><col class="log-col-result"></colgroup>
@@ -1087,6 +1064,26 @@
           </table>
         </div>
         <div id="logPager" class="flex justify-between items-center px-4 py-3 text-sm" style="color:var(--fg-muted)"></div>
+      </div>
+
+      <!-- 按账号汇总：回答「这个号到底用了多少」，不必翻几十页日志去数 -->
+      <div class="card p-4 mb-4">
+        <div class="section-head">
+          <h3><button id="logSummaryToggle" type="button" aria-expanded="true" aria-controls="logSummary" onclick="toggleLogCard('summary')">按账号汇总 <span data-fold-label>收起 ▴</span></button></h3>
+          <span class="hint" id="logSummaryHint"></span>
+        </div>
+        <div id="logSummary" class="overflow-x-auto"></div>
+      </div>
+
+      <!-- 请求详情抓取：排障用的管理员开关，放最后 -->
+      <div class="card p-3">
+        <div class="flex flex-wrap gap-3 items-center">
+          <label class="model-switch"><input id="logCaptureEnabled" type="checkbox" role="switch" disabled onchange="WBUsage.setCapture(this.checked)"><span aria-hidden="true"></span>记录请求详情（内存缓存）</label>
+          <button type="button" class="console-btn quiet" onclick="WBUsage.captureStatus()">刷新状态</button>
+          <button type="button" class="console-btn quiet" onclick="WBUsage.clearCache()">清空详情缓存</button>
+        </div>
+        <p id="logCaptureHint" class="text-xs mt-2" style="color:var(--fg-muted)">读取开关状态…</p>
+        <p class="text-xs mt-1" style="color:var(--fg-muted)">开启后记录新请求的入站正文和各次发往上游的实际正文，仅供管理员审核。凭据脱敏，正文可能含完整对话；不写数据库。关闭停止新记录，已有缓存可手动清空。</p>
       </div>
     </section>
 
@@ -1117,13 +1114,15 @@
         <div id="clientProbeBody" class="text-xs text-slate-500"></div>
       </div>
 
-      <div class="card p-5 mb-3">
-        <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+      <!-- 运行时诊断 / 取值来源是排障信息，默认折叠：平常改 UA、版本号用不到，
+           展开后各占半屏以上，把下面真正要改的字段推得很远 -->
+      <details class="card p-5 mb-3 client-debug">
+        <summary class="flex flex-wrap justify-between items-center gap-2">
           <h3 class="font-semibold text-sm">运行时诊断</h3>
           <span class="text-[11px] text-slate-400">只显示能力状态与头名称，不显示令牌或设备标识</span>
-        </div>
-        <div id="clientRuntimeDiagnostics" class="text-xs text-slate-500"></div>
-      </div>
+        </summary>
+        <div id="clientRuntimeDiagnostics" class="text-xs text-slate-500 mt-2"></div>
+      </details>
 
       <div class="card p-5 mb-3">
         <h3 class="font-semibold text-sm mb-2">生效中的 User-Agent</h3>
@@ -1151,10 +1150,10 @@
         <div id="clientHeaders"></div>
       </div>
 
-      <div class="card p-5 mb-3">
-        <h3 class="font-semibold text-sm mb-2">取值来源（排障用）</h3>
-        <div id="clientSources" class="text-xs font-mono text-slate-500 max-h-64 overflow-auto"></div>
-      </div>
+      <details class="card p-5 mb-3 client-debug">
+        <summary><h3 class="font-semibold text-sm">取值来源（排障用）</h3></summary>
+        <div id="clientSources" class="text-xs font-mono text-slate-500 max-h-64 overflow-auto mt-2"></div>
+      </details>
 
       <div id="clientStatus" class="text-sm text-slate-500 mt-4"></div>
     </section>
@@ -1526,26 +1525,26 @@
 <script src="/admin/assets/model-icons.js?v=20261028-r9"></script>
 <script src="/admin/assets/model-metadata.js?v=20261023-image-types-2"></script>
 <script src="/admin/assets/usage-ip.js?v=20261031-r2"></script>
-<script src="/admin/assets/js/console/00-core.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/05-nav.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/10-overview.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/20-sentinel-gateway.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/30-context-nav.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/40-components.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/50-accounts.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/55-tasks-growth.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/60-credits.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/70-keys-models.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/80-settings.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/85-logs-usage.js?v=20261101-layout-2"></script>
-<script src="/admin/assets/js/console/90-ui-helpers.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/00-core.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/05-nav.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/10-overview.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/20-sentinel-gateway.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/30-context-nav.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/40-components.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/50-accounts.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/55-tasks-growth.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/60-credits.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/70-keys-models.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/80-settings.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/85-logs-usage.js?v=20261101-layout-3"></script>
+<script src="/admin/assets/js/console/90-ui-helpers.js?v=20261101-layout-3"></script>
 <script src="/admin/assets/growth_center.js?v=20261031-r2"></script>
 <script src="/admin/assets/date-time-picker.js?v=20261031-r2"></script>
-<script src="/admin/assets/review-improvements.js?v=20261031-r2"></script>
+<script src="/admin/assets/review-improvements.js?v=20261101-r3"></script>
 <script src="/static/vendor/marked-12.0.2.min.js"></script>
 <script src="/static/vendor/dompurify-3.4.17.min.js"></script>
 <script src="/admin/assets/release-notes.js?v=20261031-r2"></script>
-<script src="/admin/assets/desktop.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/desktop.js?v=20261101-layout-3"></script>
 <script src="/admin/assets/profile-transfer.js?v=20261031-r2"></script>
 <script src="/admin/assets/ip-management.js?v=20261031-r2"></script>
 <script src="/admin/assets/key-ip.js?v=20261031-r2"></script>
@@ -1554,8 +1553,8 @@
      必须在 platform-switch.js **之前**加载 —— 后者要用 actionsFor()。 -->
 <script src="/admin/assets/traffic.js?v=20261029-r2"></script>
 <script src="/admin/assets/platform-actions.js?v=20261028-r10"></script>
-<script src="/admin/assets/platform-switch.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/platform-switch.js?v=20261101-layout-3"></script>
 <script src="/admin/assets/agent.js?v=20261031-r2"></script>
-<script src="/admin/assets/js/console/99-boot.js?v=20261101-layout-2"></script>
+<script src="/admin/assets/js/console/99-boot.js?v=20261101-layout-3"></script>
 </body>
 </html>

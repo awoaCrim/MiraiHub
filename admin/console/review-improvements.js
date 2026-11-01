@@ -28,17 +28,25 @@ window.WBReview = (() => {
     }
     loadJournal(1);
   }
+  // 与其他页面一致的「YYYY-MM-DD HH:mm:ss」；toLocaleString() 会随浏览器语言变成
+  // 「10/31/2026, 10:10:32 PM」这类格式。仍按本地时区显示。
+  function journalTime(value) {
+    const d = new Date(value);
+    if (isNaN(d)) return String(value || '—');
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
   function journalRow(row) {
     const delta = Number(row.delta);
     const sign = delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'neutral';
     const confirmed = row.kind === 'confirmed';
-    return '<tr><td>' + esc(new Date(row.created_at).toLocaleString()) + '</td><td>' +
+    return '<tr><td>' + esc(journalTime(row.created_at)) + '</td><td>' +
       esc(row.account_name || '#' + row.account_id) + '<small class="journal-account-id">#' + Number(row.account_id) +
       '</small></td><td><span class="journal-kind ' + (confirmed ? 'confirmed' : '') + '">' +
       (confirmed ? '确认奖励' : '余额观察') + '</span></td><td>' + esc(sourceLabel(row.source)) +
       '</td><td class="journal-number journal-delta ' + sign + '">' + (delta > 0 ? '+' : '') +
-      delta.toLocaleString() + '</td><td class="journal-number' + (row.balance_after == null ? ' journal-unrecorded' : '') +
-      '">' + (row.balance_after == null ? '未记录' : Number(row.balance_after).toLocaleString()) + '</td></tr>';
+      delta.toLocaleString('zh-CN') + '</td><td class="journal-number' + (row.balance_after == null ? ' journal-unrecorded' : '') +
+      '">' + (row.balance_after == null ? '未记录' : Number(row.balance_after).toLocaleString('zh-CN')) + '</td></tr>';
   }
   async function loadJournal(next = 1) {
     initJournal();

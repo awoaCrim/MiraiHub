@@ -1859,11 +1859,11 @@ async function loadSchedules(){
       <td class="px-4 py-3 whitespace-nowrap">${esc(s.display_name || s.name)}
         <div class="text-[11px] text-slate-400">${esc(s.platform_label || s.platform || "WorkBuddy")}</div></td>
       <td class="px-4 py-3 text-slate-500 whitespace-nowrap">${esc(s.task_label)}</td>
-      <td class="px-4 py-3 text-slate-500">${esc(s.cycle_label || ('每 '+s.interval_minutes+' 分钟'))}</td>
+      <td class="px-4 py-3 text-slate-500 whitespace-nowrap">${esc(s.cycle_label || ('每 '+s.interval_minutes+' 分钟'))}</td>
       <td class="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">${fmtTime(s.next_run_at)}</td>
       <td class="px-4 py-3 text-xs align-top">
         <div class="flex items-start gap-1">
-          <span class="flex-1 min-w-0">${scheduleResultSummary(s)}</span>
+          <span class="flex-1 min-w-0 schedule-result-text">${scheduleResultSummary(s)}</span>
           <button onclick="showScheduleResult(${s.id})" class="shrink-0 text-sky-600 hover:text-sky-800" data-tooltip="查看完整结果"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/></svg></span></button>
         </div>
         ${s.stop_after?`<div class="text-rose-400 mt-0.5">停止于 ${fmtTime(s.stop_after)}</div>`:''}
@@ -1873,7 +1873,7 @@ async function loadSchedules(){
         <button onclick="runSchedule(${s.id})" class="text-emerald-600 hover:text-emerald-800 mr-1" data-tooltip="立即运行"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg></span></button>
         <button onclick="toggleSchedule(${s.id})" class="text-indigo-600 hover:text-indigo-800 mr-1" data-tooltip="启停"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg></span></button>
         <button onclick="editSchedule(${s.id})" class="text-slate-500 hover:text-slate-800 mr-1" data-tooltip="编辑"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg></span></button>
-        <button onclick="delSchedule(${s.id})" class="text-red-500 hover:text-red-700" data-tooltip="删除 Key" data-tooltip-description="删除后该 Key 立即无法调用网关，用量记录保留。"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span></button>
+        <button onclick="delSchedule(${s.id})" class="text-red-500 hover:text-red-700" data-tooltip="删除任务" data-tooltip-description="删除后不再自动执行，已执行产生的数据保留。"><span class="wb-icon "><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span></button>
       </td>
     </tr>`).join("") || `<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">${
       hidden > 0

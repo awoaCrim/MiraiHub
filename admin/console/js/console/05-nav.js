@@ -112,7 +112,8 @@ function renderTopbarPlatform() {
   });
   const btn = host.querySelector(".ui-select-btn");
   if (btn) {
-    btn.setAttribute("data-tooltip", "当前平台：账号、积分、模型、定时任务按它统计");
+    // 不用 data-tooltip：悬停提示正好盖在下拉面板上，挡住选项
+    btn.setAttribute("aria-label", "当前平台（账号、积分、模型按它统计）");
     if (window.WBPlatformIcons) btn.insertAdjacentHTML("afterbegin", `<span class="topbar-platform-logo">${window.WBPlatformIcons.get(cur) || ""}</span>`);
   }
 }

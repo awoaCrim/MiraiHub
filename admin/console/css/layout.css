@@ -122,3 +122,71 @@
 /* 概览状态条只在加载中 / 失败时显示（10-overview.js） */
 .ov-status[hidden] { display:none; }
 #ovUpdated { margin-left:6px; color:var(--fg-subtle); font-variant-numeric:tabular-nums; }
+
+/* ---------- 明细日志表格 ----------
+   1440 宽屏内容区约 1110px，console.css 的 min-width:1180px 让表格必然横向
+   滚动，最右边「用途 / 结果」两列要拖才能看到；时间列 8% 装不下
+   「11-01 08:03:31」被截断。最小宽度降到 1100px，并从模型列匀 1% 给时间列。 */
+.log-table { min-width:1100px; }
+.log-table .log-col-time { width:9%; }
+.log-table .log-col-model { width:11%; }
+
+/* ---------- 平台管理 ---------- */
+/* 区域切换条在 console.css 里是 display:flex，盖过了 hidden 属性，单区域平台
+   下会剩一个只有边框的空框（操作行左边的小圆点）。 */
+.platform-realms[hidden] { display:none; }
+/* 平台介绍在下方平台标题里已经有一份，卡片顶部这份重复 */
+.platform-switch-note { display:none; }
+/* 操作按钮挪到平台标题右侧后（20-sentinel-gateway.js dockActions），
+   切换卡底部只剩区域切换，没有区域时整行收起 */
+.platform-switch-foot:not(:has(.platform-realms:not([hidden]))) { display:none; }
+.platform-overview-head { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:10px 20px; }
+.platform-overview-head > div:first-child { flex:1 1 320px; min-width:0; }
+.platform-overview-head .platform-actions { margin:0; }
+
+/* ---------- 调度策略 ----------
+   卡片顺序改为「设置在前、观察在后」后，原来各卡片零散的 mt-3 / 无间距不再成立，
+   统一成 16px 竖向间距 */
+#panel-gateway > .card, #panel-gateway > .live-split { margin-top:0; margin-bottom:16px; }
+
+/* ---------- API Keys 表格 ----------
+   名称、Key、并发/频率、分组都是短文本，不应换行（原来「客户A-生产环境」
+   「不限频率」「全部模型」被挤成两三行） */
+#panel-keys .tbl td:nth-child(1) { min-width:150px; }
+#panel-keys .tbl td:nth-child(2) .key-cell-text,
+#panel-keys .tbl td:nth-child(5),
+#panel-keys .tbl td:nth-child(7) { white-space:nowrap; }
+
+/* ---------- 定时任务 ----------
+   上次结果最多两行，失败信息（可能很长）点右侧放大镜看全文；
+   原来一条「所有平台都没取到模型目录…」能把一行撑到 6 行高 */
+.schedule-result-text {
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+}
+
+/* ---------- 客户端参数：折叠的排障卡片 ---------- */
+.client-debug > summary { cursor:pointer; list-style:none; }
+.client-debug > summary::-webkit-details-marker { display:none; }
+.client-debug > summary h3 { display:inline-flex; align-items:center; gap:6px; margin:0; }
+.client-debug > summary h3::before {
+  content:""; width:6px; height:6px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
+  transform:rotate(-45deg); transition:transform .15s; opacity:.6;
+}
+.client-debug[open] > summary h3::before { transform:rotate(45deg); }
+
+/* ---------- 账号池：行内「更多」菜单（40-components.js accRow） ---------- */
+.acc-row-menu { display:inline-block; vertical-align:middle; }
+.acc-row-menu > summary {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:30px; height:30px; border-radius:7px; color:var(--fg-muted);
+}
+.acc-row-menu > summary:hover, .acc-row-menu[open] > summary { background:var(--surface-2); color:var(--fg); }
+.acc-row-menu > summary .ui-icon { width:16px; height:16px; }
+.acc-row-menu .action-menu-panel { min-width:180px; text-align:left; white-space:nowrap; z-index:60; }
+/* 菜单项是 button，避开 .acc-table .c-ops button 的图标按钮尺寸 */
+.acc-table .c-ops .action-menu-panel button { width:100%; height:auto; padding:8px 10px; justify-content:flex-start; gap:10px; font-size:13px; color:var(--fg); }
+.acc-table .c-ops .action-menu-panel button .ui-icon { width:15px; height:15px; }
+.acc-table .c-ops .action-menu-panel button.is-danger { color:var(--danger); }
+.action-menu-sep { height:1px; margin:6px 4px; background:var(--border); }
+.acc-table .c-ops .action-menu-panel button:hover { transform:none; background:var(--surface-2); }
+.acc-row-menu .action-menu-panel { position:fixed; }

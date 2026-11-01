@@ -1,8 +1,12 @@
 /* ==================== Keys ==================== */
+/* 来源 IP 标签：表格里只放前 2 个、只写「IP · 次数」，并发为 0 时不写；
+ * 原来 3 个「IP · 0 并发 · 4 次」标签加一个「并发 0」，把这一列撑到整行一半宽，
+ * 名称 / Key / 频率被挤成两三行。完整列表点「N 个 / 24h」看。 */
 function keyIpBadges(summary) {
-  return (summary?.top_ips || []).slice(0,3).map(item =>
-    `<span class="badge bg-indigo-100 text-indigo-700" data-tooltip="来源 IP 用量" data-tooltip-description="${Number(item.active_requests || 0)} 路并发 · 近 24 小时 ${Number(item.requests || 0)} 次请求。">${esc(item.ip)} · ${Number(item.active_requests || 0)} 并发 · ${Number(item.requests || 0)} 次</span>`
-  ).join("");
+  return (summary?.top_ips || []).slice(0,2).map(item => {
+    const active = Number(item.active_requests || 0);
+    return `<span class="badge bg-indigo-100 text-indigo-700" data-tooltip="来源 IP 用量" data-tooltip-description="${active} 路并发 · 近 24 小时 ${Number(item.requests || 0)} 次请求。">${esc(item.ip)} · ${active ? active + " 并发 · " : ""}${Number(item.requests || 0)} 次</span>`;
+  }).join("");
 }
 /**
  * 一键复制完整 Key。
@@ -41,7 +45,7 @@ function keyRow(k) {
       <td class="px-4 py-3 text-right tnum">${k.unlimited?"∞":fmtNum(k.credit_limit)}</td>
       <td class="px-4 py-3 text-right tnum ${k.credit_used>=k.credit_limit&&!k.unlimited?'text-red-500':''}">${fmtNum(k.credit_used)}</td>
       <td class="px-4 py-3 text-right tnum" data-tooltip="并发与频率" data-tooltip-description="同一个 Key 的所有对话共享这里的并发上限和每分钟请求额度。空=跟随全局，0=不限。">${k.max_concurrent===0?'不限':(k.max_concurrent==null?'全局':k.max_concurrent)}<div class="text-xs text-slate-400">${k.rate_per_minute===0?'不限频率':(k.rate_per_minute==null?'频率随全局':k.rate_per_minute+' 次/分')}</div></td>
-      <td class="px-4 py-3"><button type="button" onclick="WBKeyIP.open(${Number(k.id)})" class="text-blue-600 whitespace-nowrap" data-tooltip="来源 IP" data-tooltip-description="查看该 Key 的来源 IP 与请求次数，用于识别共享范围与异常来源。"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg></span>${Number(k.ip_summary?.unique_ips || 0)} 个 / 24h</button><div class="mt-1 flex flex-wrap gap-1">${WBIP.concurrentTag(k.ip_summary?.active_requests)}${keyIpBadges(k.ip_summary)}</div></td>
+      <td class="px-4 py-3"><button type="button" onclick="WBKeyIP.open(${Number(k.id)})" class="text-blue-600 whitespace-nowrap" data-tooltip="来源 IP" data-tooltip-description="查看该 Key 的来源 IP 与请求次数，用于识别共享范围与异常来源。"><span class="wb-icon mr-1"><svg class="wb-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg></span>${Number(k.ip_summary?.unique_ips || 0)} 个 / 24h</button><div class="mt-1 flex flex-wrap gap-1">${Number(k.ip_summary?.active_requests) > 0 ? WBIP.concurrentTag(k.ip_summary.active_requests) : ""}${keyIpBadges(k.ip_summary)}</div></td>
       <td class="px-4 py-3">${k.group_name
           ? `<span class="badge bg-indigo-100 text-indigo-700" data-tooltip="已绑定分组" data-tooltip-description="该 Key 仅可使用所绑定分组内的模型，组外模型会返回 403。">${esc(k.group_name)}</span>`
           : `<span class="text-xs text-slate-300" data-tooltip="全部模型" data-tooltip-description="未绑定分组，可用全部已启用的模型。">全部模型</span>`}</td>

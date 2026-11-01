@@ -95,6 +95,8 @@ function uiSelectToggle(id, ev) {
   // 同时只开一个，避免面板互相重叠
   document.querySelectorAll(".ui-select.open").forEach(x => { if (x.id !== id) uiSelectClose(x); });
   if (wasOpen) uiSelectClose(el); else el.classList.add("open");
+  // 展开时收起已弹出的悬停提示（40-components.js），免得盖住选项
+  if (typeof hideActionTooltip === "function") hideActionTooltip();
 }
 
 function uiSelectPick(id, value, ev, notify = true) {
