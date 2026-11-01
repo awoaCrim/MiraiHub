@@ -61,9 +61,15 @@ def _sub_once(html: str, pattern: str, repl, label: str, flags=re.S) -> str:
 
 
 def mobile_html(html: str) -> str:
+    """改写控制台（index.html 与 js/console/*.js 按加载顺序拼接后的文本）。"""
     # --- 移除桌面专属面板 -------------------------------------------------
-    html = _sub_once(html, r'<button\b[^>]*data-tab="client".*?</button>',
-                     '', '移除「客户端参数」导航项')
+    # 导航是 js/console/05-nav.js 的分组（侧栏 data-nav + 子标签），不再有
+    # data-tab="client" / "settings" 的侧栏按钮：从「系统」组里去掉这两页，
+    # 同步页由移动端设置页接管，排到组内第一个、改名「设置」。
+    html = _replace_once(html, 'tabs: ["settings", "client", "schedules", "sync", "maintenance"]',
+                         'tabs: ["sync", "schedules", "maintenance"]',
+                         '「系统」分组去掉 client / settings')
+    html = _replace_once(html, 'sync: "同步"', 'sync: "设置"', '子标签「同步」→「设置」')
     html = _sub_once(html, r'<section id="panel-client".*?</section>',
                      '', '移除「客户端参数」面板')
     html = _sub_once(html, r'<section id="panel-settings".*?</section>',
@@ -71,8 +77,6 @@ def mobile_html(html: str) -> str:
     settings = (ROOT / "android/web/settings.html").read_text(encoding="utf-8")
     html = _sub_once(html, r'<section id="panel-sync".*?</section>',
                      lambda _: settings, '用移动端设置页替换「同步设置」')
-    html = _replace_once(html, '</svg> 同步设置</button>', '</svg> 设置</button>',
-                         '同步设置 → 设置（导航文案）')
 
     # --- 移除桌面专属脚本 -------------------------------------------------
     html = _sub_once(html, r'/\* ==================== 线上同步设置.*?'
@@ -94,8 +98,6 @@ def mobile_html(html: str) -> str:
                      flags=re.M)
     html = _sub_once(html, r'^.*if \(name === "settings"\).*\n', '', '去掉 settings 面板加载',
                      flags=re.M)
-    html = _sub_once(html, r'<button\b[^>]*data-tab="settings".*?</button>',
-                     '', '移除「设置」导航项（由移动端设置页接管）')
 
     # --- 文案与凭证提示 ---------------------------------------------------
     html = _replace_once(html, '登录新账号，或从本机与备份中恢复已有账号。',
@@ -123,6 +125,28 @@ def mobile_html(html: str) -> str:
         '<script src="/static/mobile_settings.js"></script>\n</body>',
         '注入 mobile.js / mobile_settings.js')
     return html
+
+
+# 控制台脚本拆在 admin/console/js/console/ 下，按文件名顺序加载（index.html
+# 里的 <script> 顺序与之一致）。改写规则写于脚本还内联在 index.html 的时候，
+# 所以这里按加载顺序把它们拼回一份文本跑同一套规则，再按分隔符拆回各文件：
+# 规则不用关心某段代码现在落在哪个文件，以后再挪文件也不会失配。
+_FILE_MARK = "\n/*@@MIRAIHUB-MOBILE-FILE:{}@@*/\n"
+
+
+def mobile_console(console_dir: Path) -> None:
+    files = [console_dir / "index.html", *sorted((console_dir / "js/console").glob("*.js"))]
+    names = [str(f.relative_to(console_dir)) for f in files]
+    combined = "".join(_FILE_MARK.format(name) + f.read_text(encoding="utf-8")
+                       for name, f in zip(names, files))
+    combined = mobile_html(combined)
+    parts = re.split(r"\n/\*@@MIRAIHUB-MOBILE-FILE:(.+?)@@\*/\n", combined)
+    # parts = ["", name1, text1, name2, text2, ...]；某条正则若跨文件吞掉了分隔符，
+    # 文件数或顺序就对不上 —— 宁可构建失败，也不要静默写坏文件。
+    if parts[0] or parts[1::2] != names:
+        raise MobileHtmlError("移动端改写跨越了控制台文件边界，请收窄 scripts/build_android.py 中的正则。")
+    for name, text in zip(parts[1::2], parts[2::2]):
+        (console_dir / name).write_text(text, encoding="utf-8")
 
 
 def prepare() -> None:
@@ -154,8 +178,7 @@ def prepare() -> None:
     shutil.copytree(ROOT / "admin/static", staging / "admin/static")
     shutil.copytree(ROOT / "admin/console", staging / "admin/console")
     shutil.copytree(ROOT / "admin/data", staging / "admin/data")
-    index = staging / "admin/console/index.html"
-    index.write_text(mobile_html(index.read_text(encoding="utf-8")), encoding="utf-8")
+    mobile_console(staging / "admin/console")
     for name in ("mobile.js", "mobile.css", "mobile_settings.js"):
         shutil.copy2(ROOT / "android/web" / name, staging / "admin/static" / name)
     for name in ("android_runtime.py", "mobile_http.py"):
